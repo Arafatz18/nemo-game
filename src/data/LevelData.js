@@ -1,261 +1,290 @@
+/**
+ * LevelData.js – Definitions for all 6 chapters
+ * 
+ * Scaled coordinates:
+ * Ground level: y ≈ 540 (platforms height 260 to ground floor 800)
+ * Player spawn: y ≈ 460
+ * Level bounds: width 5000-7000, height 800
+ */
+
 export const LEVELS = {
   CHAPTER_1: {
     name: "Despair Forest",
     subtitle: "The Fall",
-    fogColor: "#1a1f26",
-    ambientLight: 0.3,
+    fogColor: "#141a24",
+    ambientLight: 0.55,
     weatherType: "rain",
-    levelWidth: 6000,
-    levelHeight: 2000,
-    spawnPoint: { x: 100, y: 1500 },
+    levelWidth: 5500,
+    levelHeight: 800,
+    spawnPoint: { x: 150, y: 460 },
     platforms: [
-      { x: 0, y: 1800, width: 2000, height: 200, type: "solid" },
-      { x: 2200, y: 1800, width: 1000, height: 200, type: "solid" },
-      { x: 3500, y: 1600, width: 2500, height: 400, type: "solid" },
-      { x: 1500, y: 1600, width: 200, height: 20, type: "one_way" },
-      { x: 1800, y: 1400, width: 200, height: 20, type: "crumbling" }
+      { x: 0, y: 540, width: 1400, height: 260, type: "solid" },
+      { x: 1500, y: 480, width: 250, height: 30, type: "one_way" },
+      { x: 1850, y: 420, width: 250, height: 30, type: "one_way" },
+      { x: 2200, y: 540, width: 1200, height: 260, type: "solid" },
+      { x: 3500, y: 440, width: 200, height: 30, type: "crumbling" },
+      { x: 3800, y: 540, width: 1700, height: 260, type: "solid" }
     ],
     movingPlatforms: [
-      { x: 2000, y: 1800, width: 200, height: 20, moveX: 200, moveY: 0, speed: 2 }
+      { x: 3450, y: 500, width: 180, height: 24, moveX: 180, moveY: -80, speed: 1.5 }
     ],
     checkpoints: [
-      { x: 2500, y: 1700 }
+      { x: 2300, y: 460 },
+      { x: 3900, y: 460 }
     ],
     monsters: [
-      { type: "WATCHER", x: 800, y: 1750, patrolRange: 300 },
-      { type: "WATCHER", x: 2400, y: 1750, patrolRange: 200 },
-      { type: "WATCHER", x: 3800, y: 1550, patrolRange: 400 },
-      { type: "WATCHER", x: 4500, y: 1550, patrolRange: 300 }
+      { type: "watcher", x: 900, y: 476, patrolRange: 250 },
+      { type: "watcher", x: 2800, y: 476, patrolRange: 200 },
+      { type: "watcher", x: 4400, y: 476, patrolRange: 300 }
     ],
     collectibles: [
-      { type: "water_drop", x: 500, y: 1750 },
-      { type: "memory", x: 1800, y: 1350 },
-      { type: "well", x: 2800, y: 1700 }
+      { type: "water_drop", x: 600, y: 480 },
+      { type: "memory", x: 1950, y: 360 },
+      { type: "water_drop", x: 2600, y: 480 },
+      { type: "well", x: 3100, y: 460 },
+      { type: "memory", x: 4800, y: 480 }
     ],
     interactables: [
-      { type: "shadow_puzzle", x: 4000, y: 1550, width: 100, height: 100, action: "open_door" }
+      { type: "lantern_altar", x: 1200, y: 470, width: 60, height: 70, action: "lantern_power" },
+      { type: "ancient_gate", x: 5200, y: 420, width: 80, height: 120, action: "open_door" }
     ],
     triggers: [
-      { x: 300, y: 1500, width: 100, height: 300, event: "intro_dialogue" }
+      { x: 400, y: 400, width: 80, height: 160, event: "dialogue", entries: [{ speaker: null, text: "The cold wind cuts through the trees... I must keep the lantern lit.", duration: 0 }] }
     ],
     exits: [
-      { x: 5800, y: 1400, width: 100, height: 200, targetChapter: "CHAPTER_2" }
+      { x: 5350, y: 380, width: 100, height: 160, targetChapter: "CHAPTER_2" }
     ],
     parallaxLayers: [
-      { color: "#11141a", speed: 0.2, elements: [] },
-      { color: "#161b22", speed: 0.5, elements: [] }
+      { type: "mountains", color: "#0c1018", speed: 0.1, yOffset: 120 },
+      { type: "trees", color: "#141c28", speed: 0.35, yOffset: 180 }
     ]
   },
   CHAPTER_2: {
-    name: "Ruins of Memory",
-    subtitle: "Fragmented",
-    fogColor: "#15181e",
-    ambientLight: 0.4,
+    name: "Forgotten Village",
+    subtitle: "Echoes of Regret",
+    fogColor: "#161822",
+    ambientLight: 0.5,
     weatherType: "wind",
-    levelWidth: 7000,
-    levelHeight: 3000,
-    spawnPoint: { x: 100, y: 2500 },
+    levelWidth: 6000,
+    levelHeight: 800,
+    spawnPoint: { x: 150, y: 460 },
     platforms: [
-      { x: 0, y: 2800, width: 1500, height: 200, type: "solid" },
-      { x: 1800, y: 2600, width: 800, height: 400, type: "solid" },
-      { x: 2800, y: 2300, width: 1200, height: 700, type: "solid" },
-      { x: 4500, y: 2800, width: 2500, height: 200, type: "solid" }
+      { x: 0, y: 540, width: 1200, height: 260, type: "solid" },
+      { x: 1300, y: 460, width: 300, height: 30, type: "one_way" },
+      { x: 1700, y: 380, width: 300, height: 30, type: "solid" },
+      { x: 2100, y: 540, width: 1500, height: 260, type: "solid" },
+      { x: 3700, y: 440, width: 250, height: 30, type: "one_way" },
+      { x: 4100, y: 540, width: 1900, height: 260, type: "solid" }
     ],
     movingPlatforms: [
-      { x: 1500, y: 2800, width: 300, height: 50, moveX: 0, moveY: -300, speed: 3 },
-      { x: 4000, y: 2500, width: 300, height: 50, moveX: 500, moveY: 0, speed: 2 }
+      { x: 3650, y: 500, width: 180, height: 24, moveX: 200, moveY: 0, speed: 2 }
     ],
     checkpoints: [
-      { x: 2000, y: 2500 },
-      { x: 3500, y: 2200 }
+      { x: 2200, y: 460 },
+      { x: 4200, y: 460 }
     ],
     monsters: [
-      { type: "WANDERER", x: 1000, y: 2750, patrolRange: 400 },
-      { type: "WATCHER", x: 2200, y: 2550, patrolRange: 200 },
-      { type: "WANDERER", x: 3200, y: 2250, patrolRange: 500 },
-      { type: "WANDERER", x: 5000, y: 2750, patrolRange: 600 }
+      { type: "crawler", x: 800, y: 500, patrolRange: 300 },
+      { type: "watcher", x: 2600, y: 476, patrolRange: 250 },
+      { type: "crawler", x: 3000, y: 500, patrolRange: 200 },
+      { type: "crawler", x: 4700, y: 500, patrolRange: 400 }
     ],
     collectibles: [
-      { type: "memory", x: 2200, y: 2200 },
-      { type: "water_drop", x: 1200, y: 2700 },
-      { type: "spring", x: 3000, y: 2250 }
+      { type: "water_drop", x: 500, y: 480 },
+      { type: "memory", x: 1800, y: 320 },
+      { type: "well", x: 2800, y: 460 },
+      { type: "water_drop", x: 3400, y: 480 },
+      { type: "memory", x: 5200, y: 480 }
     ],
     interactables: [
-      { type: "light_puzzle", x: 3500, y: 2200, width: 80, height: 80, action: "reveal_platform" }
+      { type: "ruin_mechanism", x: 3200, y: 460, width: 60, height: 80, action: "bridge_lower" }
     ],
     triggers: [
-      { x: 1500, y: 2500, width: 100, height: 300, event: "memory_flashback_1" }
+      { x: 300, y: 400, width: 80, height: 160, event: "ability", ability: "dash", abilityName: "Shadow Dash [Q]" }
     ],
     exits: [
-      { x: 6800, y: 2600, width: 100, height: 200, targetChapter: "CHAPTER_3" }
+      { x: 5850, y: 380, width: 100, height: 160, targetChapter: "CHAPTER_3" }
     ],
     parallaxLayers: [
-      { color: "#0d1014", speed: 0.1, elements: [] },
-      { color: "#11151a", speed: 0.4, elements: [] }
+      { type: "ruins", color: "#0f121a", speed: 0.15, yOffset: 140 },
+      { type: "trees", color: "#161a26", speed: 0.4, yOffset: 190 }
     ]
   },
   CHAPTER_3: {
-    name: "The Deep",
-    subtitle: "Suffocation",
-    fogColor: "#0d1116",
-    ambientLight: 0.1,
-    weatherType: "none",
-    levelWidth: 6500,
-    levelHeight: 4000,
-    spawnPoint: { x: 100, y: 1000 },
+    name: "Echo Cave",
+    subtitle: "Whispers in the Dark",
+    fogColor: "#0d1018",
+    ambientLight: 0.45,
+    weatherType: "mist",
+    levelWidth: 6000,
+    levelHeight: 800,
+    spawnPoint: { x: 150, y: 460 },
     platforms: [
-      { x: 0, y: 1200, width: 800, height: 2800, type: "solid" },
-      { x: 1200, y: 1800, width: 600, height: 2200, type: "solid" },
-      { x: 2400, y: 2500, width: 800, height: 1500, type: "solid" },
-      { x: 3800, y: 3200, width: 2700, height: 800, type: "solid" }
+      { x: 0, y: 540, width: 1500, height: 260, type: "solid" },
+      { x: 1600, y: 440, width: 250, height: 30, type: "one_way" },
+      { x: 1950, y: 360, width: 250, height: 30, type: "one_way" },
+      { x: 2300, y: 540, width: 1400, height: 260, type: "solid" },
+      { x: 3800, y: 440, width: 300, height: 30, type: "crumbling" },
+      { x: 4200, y: 540, width: 1800, height: 260, type: "solid" }
     ],
     movingPlatforms: [
-      { x: 800, y: 1200, width: 200, height: 30, moveX: 0, moveY: 600, speed: 2 },
-      { x: 1800, y: 1800, width: 200, height: 30, moveX: 0, moveY: 700, speed: 2 },
-      { x: 3200, y: 2500, width: 200, height: 30, moveX: 0, moveY: 700, speed: 2 }
+      { x: 3750, y: 520, width: 180, height: 24, moveX: 200, moveY: -60, speed: 1.8 }
     ],
     checkpoints: [
-      { x: 1400, y: 1700 },
-      { x: 2600, y: 2400 }
+      { x: 2400, y: 460 },
+      { x: 4300, y: 460 }
     ],
     monsters: [
-      { type: "SHADOW", x: 1400, y: 1700, patrolRange: 200 },
-      { type: "SHADOW", x: 2600, y: 2400, patrolRange: 300 },
-      { type: "SHADOW", x: 4500, y: 3100, patrolRange: 500 }
+      { type: "hollow_child", x: 1000, y: 476, patrolRange: 200 },
+      { type: "hollow_child", x: 2900, y: 476, patrolRange: 200 },
+      { type: "watcher", x: 4700, y: 476, patrolRange: 300 }
     ],
     collectibles: [
-      { type: "memory", x: 1400, y: 1600 },
-      { type: "water_drop", x: 2600, y: 2300 },
-      { type: "well", x: 5000, y: 3150 }
+      { type: "water_drop", x: 700, y: 480 },
+      { type: "memory", x: 2050, y: 300 },
+      { type: "spring", x: 3100, y: 460 },
+      { type: "memory", x: 5000, y: 480 }
     ],
     interactables: [
-      { type: "water_puzzle", x: 4200, y: 3100, width: 100, height: 100, action: "drain_water" }
+      { type: "crystal_resonance", x: 3300, y: 460, width: 60, height: 80, action: "crystal_activate" }
     ],
     triggers: [
-      { x: 3500, y: 2800, width: 200, height: 500, event: "claustrophobia_effect" }
+      { x: 300, y: 400, width: 80, height: 160, event: "ability", ability: "spiritVision", abilityName: "Spirit Vision" }
     ],
     exits: [
-      { x: 6300, y: 3000, width: 100, height: 200, targetChapter: "CHAPTER_4" }
+      { x: 5850, y: 380, width: 100, height: 160, targetChapter: "CHAPTER_4" }
     ],
     parallaxLayers: [
-      { color: "#06080a", speed: 0.1, elements: [] },
-      { color: "#090c10", speed: 0.3, elements: [] }
+      { type: "mountains", color: "#080a10", speed: 0.1, yOffset: 100 },
+      { type: "ruins", color: "#101420", speed: 0.3, yOffset: 160 }
     ]
   },
   CHAPTER_4: {
-    name: "Echoes of Regret",
-    subtitle: "Echoes",
-    fogColor: "#1c171e",
-    ambientLight: 0.35,
-    weatherType: "storm",
-    levelWidth: 8000,
-    levelHeight: 2500,
-    spawnPoint: { x: 100, y: 2000 },
+    name: "Drowned Marsh",
+    subtitle: "Depths of Sorrow",
+    fogColor: "#121a1e",
+    ambientLight: 0.5,
+    weatherType: "rain",
+    levelWidth: 6500,
+    levelHeight: 800,
+    spawnPoint: { x: 150, y: 460 },
     platforms: [
-      { x: 0, y: 2200, width: 2000, height: 300, type: "solid" },
-      { x: 2500, y: 2000, width: 1500, height: 500, type: "solid" },
-      { x: 4500, y: 2200, width: 3500, height: 300, type: "solid" }
+      { x: 0, y: 540, width: 1400, height: 260, type: "solid" },
+      { x: 1500, y: 480, width: 280, height: 30, type: "one_way" },
+      { x: 1900, y: 540, width: 1200, height: 260, type: "solid" },
+      { x: 3200, y: 460, width: 300, height: 30, type: "one_way" },
+      { x: 3600, y: 540, width: 1100, height: 260, type: "solid" },
+      { x: 4800, y: 540, width: 1700, height: 260, type: "solid" }
     ],
     movingPlatforms: [
-      { x: 2000, y: 2200, width: 250, height: 40, moveX: 250, moveY: -200, speed: 4 }
+      { x: 4700, y: 520, width: 180, height: 24, moveX: 200, moveY: 0, speed: 2.2 }
     ],
     checkpoints: [
-      { x: 2800, y: 1900 },
-      { x: 5000, y: 2100 }
+      { x: 2000, y: 460 },
+      { x: 3700, y: 460 }
     ],
     monsters: [
-      { type: "SHADOW", x: 1500, y: 2150, patrolRange: 400 },
-      { type: "WANDERER", x: 3000, y: 1950, patrolRange: 600 },
-      { type: "WATCHER", x: 5500, y: 2150, patrolRange: 300 },
-      { type: "SHADOW", x: 6500, y: 2150, patrolRange: 500 }
+      { type: "drowned", x: 900, y: 476, patrolRange: 250 },
+      { type: "drowned", x: 2400, y: 476, patrolRange: 300 },
+      { type: "crawler", x: 3900, y: 500, patrolRange: 250 },
+      { type: "drowned", x: 5200, y: 476, patrolRange: 350 }
     ],
     collectibles: [
-      { type: "memory", x: 3500, y: 1800 },
-      { type: "spring", x: 5200, y: 2100 }
+      { type: "water_drop", x: 600, y: 480 },
+      { type: "memory", x: 1600, y: 420 },
+      { type: "spring", x: 2700, y: 460 },
+      { type: "water_drop", x: 4200, y: 480 },
+      { type: "memory", x: 5500, y: 480 }
     ],
     interactables: [
-      { type: "sound_puzzle", x: 6000, y: 2100, width: 120, height: 120, action: "stop_storm" }
+      { type: "water_valve", x: 2800, y: 460, width: 60, height: 80, action: "drain_marsh" }
     ],
     triggers: [
-      { x: 4000, y: 1500, width: 100, height: 1000, event: "echoes_audio_log" }
+      { x: 300, y: 400, width: 80, height: 160, event: "ability", ability: "waterWalk", abilityName: "Water Walking" }
     ],
     exits: [
-      { x: 7800, y: 2000, width: 100, height: 200, targetChapter: "CHAPTER_5" }
+      { x: 6350, y: 380, width: 100, height: 160, targetChapter: "CHAPTER_5" }
     ],
     parallaxLayers: [
-      { color: "#110e12", speed: 0.15, elements: [] },
-      { color: "#161218", speed: 0.45, elements: [] }
+      { type: "mountains", color: "#091216", speed: 0.1, yOffset: 120 },
+      { type: "trees", color: "#101c22", speed: 0.35, yOffset: 170 }
     ]
   },
   CHAPTER_5: {
-    name: "The Beast Within",
-    subtitle: "Confrontation",
-    fogColor: "#241a1a",
-    ambientLight: 0.2,
-    weatherType: "ash",
-    levelWidth: 6000,
-    levelHeight: 2000,
-    spawnPoint: { x: 100, y: 1500 },
+    name: "Tower of Regret",
+    subtitle: "The Inner Beast",
+    fogColor: "#1c1214",
+    ambientLight: 0.45,
+    weatherType: "storm",
+    levelWidth: 5000,
+    levelHeight: 800,
+    spawnPoint: { x: 150, y: 460 },
     platforms: [
-      { x: 0, y: 1700, width: 1500, height: 300, type: "solid" },
-      { x: 2000, y: 1700, width: 4000, height: 300, type: "solid" }
+      { x: 0, y: 540, width: 1200, height: 260, type: "solid" },
+      { x: 1300, y: 460, width: 250, height: 30, type: "one_way" },
+      { x: 1650, y: 380, width: 250, height: 30, type: "one_way" },
+      { x: 2000, y: 540, width: 3000, height: 260, type: "solid" }
     ],
-    movingPlatforms: [
-      { x: 1500, y: 1700, width: 500, height: 40, moveX: 0, moveY: 0, speed: 0 } // Bridge that forms
-    ],
+    movingPlatforms: [],
     checkpoints: [
-      { x: 2200, y: 1600 }
+      { x: 1800, y: 460 }
     ],
     monsters: [
-      { type: "REGRET_BEAST", x: 4000, y: 1600, patrolRange: 1000, boss: true }
+      { type: "regret_beast", x: 3200, y: 350, patrolRange: 500 }
     ],
     collectibles: [
-      { type: "memory", x: 2500, y: 1600 },
-      { type: "spring", x: 2100, y: 1600 }
+      { type: "spring", x: 1000, y: 460 },
+      { type: "memory", x: 1750, y: 320 },
+      { type: "well", x: 2400, y: 460 },
+      { type: "memory", x: 4200, y: 480 }
     ],
     interactables: [
-      { type: "physics_puzzle", x: 1000, y: 1600, width: 200, height: 200, action: "form_bridge" }
+      { type: "boss_altar", x: 2600, y: 460, width: 80, height: 80, action: "boss_trigger" }
     ],
     triggers: [
-      { x: 3000, y: 1000, width: 100, height: 1000, event: "boss_encounter" }
+      { x: 2500, y: 300, width: 100, height: 300, event: "boss", x: 3200, y: 400 }
     ],
     exits: [
-      { x: 5800, y: 1500, width: 100, height: 200, targetChapter: "CHAPTER_6" }
+      { x: 4850, y: 380, width: 100, height: 160, targetChapter: "CHAPTER_6" }
     ],
     parallaxLayers: [
-      { color: "#150e0e", speed: 0.1, elements: [] },
-      { color: "#1a1212", speed: 0.3, elements: [] }
+      { type: "ruins", color: "#140a0c", speed: 0.1, yOffset: 120 },
+      { type: "mountains", color: "#1c1012", speed: 0.35, yOffset: 170 }
     ]
   },
   CHAPTER_6: {
-    name: "Acceptance",
-    subtitle: "Sunrise",
-    fogColor: "#2c333a",
-    ambientLight: 0.8,
+    name: "Final Memory",
+    subtitle: "The Choice",
+    fogColor: "#161b24",
+    ambientLight: 0.65,
     weatherType: "clear",
-    levelWidth: 5000,
-    levelHeight: 1500,
-    spawnPoint: { x: 100, y: 1000 },
+    levelWidth: 4000,
+    levelHeight: 800,
+    spawnPoint: { x: 150, y: 460 },
     platforms: [
-      { x: 0, y: 1200, width: 5000, height: 300, type: "solid" }
+      { x: 0, y: 540, width: 4000, height: 260, type: "solid" }
     ],
     movingPlatforms: [],
     checkpoints: [],
     monsters: [],
     collectibles: [
-      { type: "memory", x: 1000, y: 1100 },
-      { type: "memory", x: 2000, y: 1100 },
-      { type: "memory", x: 3000, y: 1100 },
-      { type: "memory", x: 4000, y: 1100 }
+      { type: "memory", x: 800, y: 480 },
+      { type: "memory", x: 1500, y: 480 },
+      { type: "memory", x: 2200, y: 480 },
+      { type: "memory", x: 2900, y: 480 },
+      { type: "spring", x: 1800, y: 460 }
     ],
-    interactables: [],
+    interactables: [
+      { type: "final_choice_return", x: 3400, y: 440, width: 80, height: 100, action: "ending_acceptance" },
+      { type: "final_choice_stay", x: 3650, y: 440, width: 80, height: 100, action: "ending_lost" }
+    ],
     triggers: [
-      { x: 4500, y: 800, width: 100, height: 500, event: "ending_sequence" }
+      { x: 3300, y: 300, width: 100, height: 300, event: "ending", endingType: "acceptance" }
     ],
     exits: [],
     parallaxLayers: [
-      { color: "#1f252a", speed: 0.2, elements: [] },
-      { color: "#252b31", speed: 0.6, elements: [] }
+      { type: "mountains", color: "#101824", speed: 0.1, yOffset: 130 },
+      { type: "trees", color: "#1a2434", speed: 0.3, yOffset: 180 }
     ]
   }
 };

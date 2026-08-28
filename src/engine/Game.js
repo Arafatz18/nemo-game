@@ -648,77 +648,88 @@ export default class Game {
     _renderPlatform(ctx, platform) {
         const { x, y, width, height, type } = platform;
 
-        // Different styles per type
+        ctx.save();
         switch (type) {
             case 'solid':
-                ctx.fillStyle = '#1a1c22';
+                // Base stone body with dark blue-gray gradient
+                const grad = ctx.createLinearGradient(x, y, x, y + Math.min(height, 300));
+                grad.addColorStop(0, '#1a2230');
+                grad.addColorStop(0.1, '#121822');
+                grad.addColorStop(1, '#090b10');
+                ctx.fillStyle = grad;
                 ctx.fillRect(x, y, width, height);
-                // Top edge highlight
-                ctx.fillStyle = '#2a2e38';
-                ctx.fillRect(x, y, width, 2);
-                // Subtle texture lines
-                ctx.strokeStyle = 'rgba(40, 45, 55, 0.3)';
+
+                // Top grass / stone trim highlight
+                ctx.fillStyle = '#3a4c68';
+                ctx.fillRect(x, y, width, 4);
+                ctx.fillStyle = 'rgba(140, 185, 230, 0.5)';
+                ctx.fillRect(x, y, width, 1);
+
+                // Subtle cliff texture lines
+                ctx.strokeStyle = 'rgba(60, 80, 110, 0.2)';
                 ctx.lineWidth = 1;
-                for (let lx = x + 10; lx < x + width; lx += 20) {
+                for (let lx = x + 20; lx < x + width; lx += 35) {
                     ctx.beginPath();
-                    ctx.moveTo(lx, y + 3);
-                    ctx.lineTo(lx + 8, y + height);
+                    ctx.moveTo(lx, y + 4);
+                    ctx.lineTo(lx + 8, y + Math.min(height, 120));
                     ctx.stroke();
                 }
                 break;
 
             case 'one_way':
-                ctx.fillStyle = '#1e2028';
+                // Ethereal floating bridge
+                ctx.fillStyle = 'rgba(26, 36, 52, 0.9)';
                 ctx.fillRect(x, y, width, height);
-                // Dashed top to indicate passable
-                ctx.strokeStyle = '#3a3e4a';
+
+                ctx.fillStyle = '#4a6c90';
+                ctx.fillRect(x, y, width, 3);
+
+                // Luminous dashes
+                ctx.strokeStyle = 'rgba(140, 190, 240, 0.6)';
                 ctx.lineWidth = 2;
-                ctx.setLineDash([6, 4]);
+                ctx.setLineDash([8, 6]);
                 ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.lineTo(x + width, y);
+                ctx.moveTo(x, y + 1);
+                ctx.lineTo(x + width, y + 1);
                 ctx.stroke();
                 ctx.setLineDash([]);
                 break;
 
             case 'moving':
-                ctx.fillStyle = '#1c2030';
+                // Kinetic platform with rune glow
+                ctx.fillStyle = '#1c2838';
                 ctx.fillRect(x, y, width, height);
-                // Blue-ish tint for moving platforms
-                ctx.fillStyle = 'rgba(80, 100, 140, 0.15)';
-                ctx.fillRect(x, y, width, height);
-                ctx.fillStyle = '#3a4258';
-                ctx.fillRect(x, y, width, 2);
+
+                ctx.fillStyle = '#4a82b8';
+                ctx.fillRect(x, y, width, 4);
+
+                ctx.fillStyle = 'rgba(120, 180, 255, 0.7)';
+                ctx.shadowColor = 'rgba(100, 170, 255, 0.8)';
+                ctx.shadowBlur = 8;
+                ctx.fillRect(x + width / 2 - 15, y + 8, 30, 4);
+                ctx.shadowBlur = 0;
                 break;
 
             case 'crumbling':
-                // Cracked appearance
-                ctx.fillStyle = platform.crumbleTimer > 0 ? '#2a1818' : '#1a1c22';
+                // Fractured earth
+                ctx.fillStyle = platform.isCrumbling ? '#30181c' : '#221c24';
                 ctx.fillRect(x, y, width, height);
-                // Cracks
-                ctx.strokeStyle = 'rgba(60, 40, 40, 0.5)';
-                ctx.lineWidth = 1;
-                const segments = Math.floor(width / 15);
-                for (let i = 0; i < segments; i++) {
-                    const sx = x + i * 15 + Math.random() * 5;
-                    ctx.beginPath();
-                    ctx.moveTo(sx, y);
-                    ctx.lineTo(sx + 5, y + height * 0.5);
-                    ctx.lineTo(sx - 2, y + height);
-                    ctx.stroke();
-                }
-                // Shake if crumbling
-                if (platform.crumbleTimer > 0) {
-                    ctx.fillStyle = 'rgba(100, 50, 50, 0.1)';
-                    ctx.fillRect(x + Math.random() * 2 - 1, y, width, height);
+
+                ctx.fillStyle = platform.isCrumbling ? '#c44' : '#885566';
+                ctx.fillRect(x, y, width, 3);
+
+                if (platform.isCrumbling) {
+                    ctx.fillStyle = 'rgba(255, 100, 100, 0.2)';
+                    ctx.fillRect(x + Math.random() * 4 - 2, y, width, height);
                 }
                 break;
 
             default:
-                ctx.fillStyle = '#1a1c22';
+                ctx.fillStyle = '#1a2230';
                 ctx.fillRect(x, y, width, height);
                 break;
         }
+        ctx.restore();
     }
 
     // =========================================================================
@@ -753,7 +764,7 @@ export default class Game {
         this.state = STATE.TRANSITIONING;
 
         // Transition out
-        await this.transitionSystem.fadeOut(800, '#000');
+        await this.transitionSystem.fadeOut(600, '#000');
 
         this.currentChapter = index;
         const chapterData = this.levelManager.loadChapter(index);
@@ -764,7 +775,7 @@ export default class Game {
         }
 
         // Setup player
-        const spawn = chapterData.spawnPoint || { x: 100, y: 300 };
+        const spawn = chapterData.spawnPoint || { x: 150, y: 460 };
         this.player = new Player(spawn.x, spawn.y);
 
         // Unlock abilities based on chapter
@@ -776,22 +787,27 @@ export default class Game {
 
         // Setup camera
         const lvlData = this.levelManager.getCurrentChapterData();
-        this.camera.setBounds(lvlData.levelWidth || 8000, lvlData.levelHeight || 1500);
-        this.camera.reset(spawn.x - GAME_WIDTH / 2, spawn.y - GAME_HEIGHT / 2);
+        const lvlW = lvlData?.levelWidth || 5500;
+        const lvlH = lvlData?.levelHeight || 800;
+        this.camera.setBounds(lvlW, lvlH);
+        this.camera.width = this.renderer.getWidth();
+        this.camera.height = this.renderer.getHeight();
+        this.camera.x = Math.max(0, spawn.x - this.camera.width / 2);
+        this.camera.y = Math.max(0, Math.min(spawn.y - this.camera.height / 2, lvlH - this.camera.height));
 
         // Setup parallax
-        this.parallax = new Parallax(lvlData.parallaxLayers || null);
+        this.parallax = new Parallax(lvlData?.parallaxLayers || null);
 
         // Generate decorations
-        const groundY = 500; // approximate ground level
-        this.decorations.trees = LevelGenerator.generateTrees(15, lvlData.levelWidth || 8000, groundY);
-        this.decorations.rocks = LevelGenerator.generateRocks(10, lvlData.levelWidth || 8000, groundY);
-        this.decorations.grass = LevelGenerator.generateGrass(30, lvlData.levelWidth || 8000, groundY);
+        const groundY = 540;
+        this.decorations.trees = LevelGenerator.generateTrees(18, lvlW, groundY);
+        this.decorations.rocks = LevelGenerator.generateRocks(14, lvlW, groundY);
+        this.decorations.grass = LevelGenerator.generateGrass(40, lvlW, groundY);
 
         // Setup lighting
         this.lightingSystem.clear();
         this.lanternLightId = null;
-        this.lightingSystem.setAmbient(lvlData.ambientLight || 0.88);
+        this.lightingSystem.setAmbient(lvlData?.ambientLight || 0.55);
 
         // Add static lights from collectibles and interactables
         const collectibles = this.levelManager.collectibles;

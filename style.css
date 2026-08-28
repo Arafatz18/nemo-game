@@ -64,8 +64,8 @@ html, body {
 
 #bg-canvas    { z-index: 1; }
 #game-canvas  { z-index: 2; }
-#light-canvas { z-index: 3; mix-blend-mode: multiply; }
-#ui-canvas    { z-index: 4; }
+#light-canvas { z-index: 3; pointer-events: none; }
+#ui-canvas    { z-index: 4; pointer-events: none; }
 
 /* Loading Screen */
 #loading-screen {
