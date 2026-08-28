@@ -1,7 +1,15 @@
+/**
+ * Input.js – Global Keyboard and Mouse Input Handler
+ * 
+ * Tracks keys currently held (down) and keys pressed this frame.
+ * Supports standard codes, lowercase shortcuts, and mouse interactions.
+ */
+
 export default class Input {
     constructor() {
         this.keysDown = new Set();
         this.keysPressed = new Set();
+        this.rawKeysDown = new Set(); // holds e.key.toLowerCase() and e.code
         this.mouse = { x: 0, y: 0, down: false, clicked: false };
         
         this.keyMap = {
@@ -10,6 +18,20 @@ export default class Input {
             'KeyS': 'ArrowDown',
             'KeyD': 'ArrowRight'
         };
+
+        // Proxy to support input.keys['a'], input.keys.has('Space'), etc.
+        const self = this;
+        this.keys = new Proxy({}, {
+            get(target, prop) {
+                if (prop === 'has') {
+                    return (key) => self.isDown(key);
+                }
+                if (typeof prop === 'string') {
+                    return self.isDown(prop);
+                }
+                return false;
+            }
+        });
 
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleKeyUp = this.handleKeyUp.bind(this);
@@ -25,21 +47,33 @@ export default class Input {
     }
 
     handleKeyDown(e) {
-        let code = e.code;
-        if (this.keyMap[code]) {
-            code = this.keyMap[code];
-        }
-        if (!this.keysDown.has(code)) {
+        const code = e.code;
+        const key = e.key.toLowerCase();
+
+        this.rawKeysDown.add(key);
+        this.rawKeysDown.add(code);
+        if (e.key === ' ') this.rawKeysDown.add(' ');
+
+        let mappedCode = this.keyMap[code] || code;
+        if (!this.keysDown.has(mappedCode)) {
+            this.keysPressed.add(mappedCode);
             this.keysPressed.add(code);
+            this.keysPressed.add(key);
         }
+        this.keysDown.add(mappedCode);
         this.keysDown.add(code);
     }
 
     handleKeyUp(e) {
-        let code = e.code;
-        if (this.keyMap[code]) {
-            code = this.keyMap[code];
-        }
+        const code = e.code;
+        const key = e.key.toLowerCase();
+
+        this.rawKeysDown.delete(key);
+        this.rawKeysDown.delete(code);
+        if (e.key === ' ') this.rawKeysDown.delete(' ');
+
+        let mappedCode = this.keyMap[code] || code;
+        this.keysDown.delete(mappedCode);
         this.keysDown.delete(code);
     }
 
@@ -58,11 +92,27 @@ export default class Input {
     }
 
     isDown(key) {
-        return this.keysDown.has(key);
+        if (!key) return false;
+        const k = typeof key === 'string' ? key.toLowerCase() : key;
+        return this.keysDown.has(key) || 
+               this.rawKeysDown.has(k) || 
+               (key === ' ' && this.rawKeysDown.has(' ')) ||
+               (k === 'shift' && (this.keysDown.has('ShiftLeft') || this.keysDown.has('ShiftRight') || this.rawKeysDown.has('shift')));
     }
 
     isPressed(key) {
-        return this.keysPressed.has(key);
+        if (!key) return false;
+        const k = typeof key === 'string' ? key.toLowerCase() : key;
+        return this.keysPressed.has(key) || 
+               this.keysPressed.has(k) ||
+               (key === ' ' && this.keysPressed.has(' ')) ||
+               (k === 'space' && this.keysPressed.has('Space')) ||
+               (k === 'enter' && this.keysPressed.has('Enter')) ||
+               (k === 'shift' && (this.keysPressed.has('ShiftLeft') || this.keysPressed.has('ShiftRight')));
+    }
+
+    justPressed(key) {
+        return this.isPressed(key);
     }
 
     update() {

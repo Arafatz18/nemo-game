@@ -48,10 +48,8 @@ export default class DialogueSystem {
             this.displayedText = this.currentText.substring(0, Math.floor(this.charIndex));
         }
 
-        if (input && (input.keys.has('Space') || input.keys.has('KeyE'))) {
-            if (input.justPressed('Space') || input.justPressed('KeyE')) {
-                this.advance();
-            }
+        if (input && (input.isPressed('Space') || input.isPressed('KeyE') || input.isPressed('Enter') || (input.mouse && input.mouse.clicked))) {
+            this.advance();
         }
     }
 

@@ -105,7 +105,8 @@ export default class LevelManager {
         // --- Monsters ---
         if (data.monsters) {
             for (const m of data.monsters) {
-                const MonsterClass = MONSTER_MAP[m.type];
+                const mType = (m.type || '').toLowerCase();
+                const MonsterClass = MONSTER_MAP[mType];
                 if (MonsterClass) {
                     const monster = new MonsterClass(m.x, m.y, {
                         patrolRange: m.patrolRange || 200,

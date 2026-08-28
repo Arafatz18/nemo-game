@@ -1,39 +1,55 @@
+/**
+ * Player.js – Nemo Character Controller
+ * 
+ * Manages player state, animations, input response, physics integration,
+ * abilities (Lantern, Dash, Spirit Vision, Water Walking), and rendering.
+ */
+
 import { PLAYER, PHYSICS, COLORS } from '../data/GameConfig.js';
 import { SPRITE_DATA, FRAME_DURATIONS } from '../data/SpriteData.js';
 
 export default class Player {
-    constructor(x, y) {
+    constructor(x = 100, y = 300) {
         this.x = x;
         this.y = y;
-        this.width = 40;
-        this.height = 64;
+        this.width = PLAYER.WIDTH || 40;
+        this.height = PLAYER.HEIGHT || 64;
         this.vx = 0;
         this.vy = 0;
-        this.facing = 1;
+        this.facing = 1; // 1 = right, -1 = left
         this.state = 'IDLE';
         this.health = 100;
-        this.onGround = false;
-        this.onWall = false;
+        this.maxHealth = 100;
         this.active = true;
 
-        this.currentAnim = 'IDLE';
-        this.frameIndex = 0;
-        this.frameTimer = 0;
+        this.onGround = false;
+        this.onWall = false;
+        this.coyoteTimer = 0;
+        this.jumpBufferTimer = 0;
 
+        // Abilities
         this.hasLantern = true;
-        this.lanternActive = false;
+        this.lanternActive = true;
         this.hasDash = false;
         this.hasSpiritVision = false;
         this.hasWaterWalk = false;
         this.hasMemoryReconstruct = false;
 
+        // Dash state
         this.isDashing = false;
         this.dashTimer = 0;
         this.dashCooldown = 0;
+
+        // Invincibility
+        this.invincible = false;
         this.invincibilityTimer = 0;
-        
-        this.coyoteTimer = 0;
-        this.jumpBufferTimer = 0;
+
+        // Animation
+        this.currentAnim = 'IDLE';
+        this.frameIndex = 0;
+        this.frameTimer = 0;
+
+        // Checkpoint spawn
         this.respawnX = x;
         this.respawnY = y;
     }
@@ -41,87 +57,176 @@ export default class Player {
     update(input, physics, platforms, dt) {
         if (!this.active || this.state === 'DIE') return;
 
-        if (this.invincibilityTimer > 0) this.invincibilityTimer -= dt;
-        if (this.dashCooldown > 0) this.dashCooldown -= dt;
+        // Convert dt from ms to seconds if needed (Game.js passes ~16.6ms)
+        const dtSec = dt > 1 ? dt / 1000 : dt;
 
-        if (input.keys['f'] && !this.lanternToggleHeld) {
-            this.lanternActive = !this.lanternActive;
-            this.lanternToggleHeld = true;
-        } else if (!input.keys['f']) {
-            this.lanternToggleHeld = false;
+        if (this.invincibilityTimer > 0) {
+            this.invincibilityTimer -= dtSec;
+            if (this.invincibilityTimer <= 0) this.invincible = false;
+        }
+        if (this.dashCooldown > 0) {
+            this.dashCooldown -= dtSec;
         }
 
-        if (input.keys['q'] && this.hasDash && this.dashCooldown <= 0 && !this.isDashing) {
+        // --- Abilities Input ---
+        if (input.isPressed('KeyF') || input.isPressed('f')) {
+            this.lanternActive = !this.lanternActive;
+        }
+
+        if ((input.isPressed('KeyQ') || input.isPressed('q')) && this.hasDash && this.dashCooldown <= 0 && !this.isDashing) {
             this.dash();
         }
 
+        // --- Movement Input ---
         if (this.isDashing) {
-            this.dashTimer -= dt;
+            this.dashTimer -= dtSec;
             this.vy = 0;
-            this.vx = this.facing * 15; // dash speed
+            this.vx = this.facing * (PLAYER.DASH_SPEED || 14);
             if (this.dashTimer <= 0) {
                 this.isDashing = false;
             }
         } else {
-            let moveSpeed = input.keys['shift'] ? 6 : 3;
-            if (input.keys['a']) {
-                this.vx -= 1;
+            const isRun = input.isDown('Shift') || input.isDown('ShiftLeft') || input.isDown('ShiftRight');
+            const maxSpeed = isRun ? (PLAYER.RUN_SPEED || 5.5) : (PLAYER.WALK_SPEED || 3.2);
+            
+            const movingLeft = input.isDown('ArrowLeft') || input.isDown('KeyA') || input.isDown('a');
+            const movingRight = input.isDown('ArrowRight') || input.isDown('KeyD') || input.isDown('d');
+
+            if (movingLeft && !movingRight) {
+                this.vx = -maxSpeed;
                 this.facing = -1;
-            } else if (input.keys['d']) {
-                this.vx += 1;
+            } else if (movingRight && !movingLeft) {
+                this.vx = maxSpeed;
                 this.facing = 1;
             } else {
-                this.vx *= 0.8; // friction
+                this.vx *= 0.75;
+                if (Math.abs(this.vx) < 0.1) this.vx = 0;
             }
-            
-            this.vx = Math.max(-moveSpeed, Math.min(moveSpeed, this.vx));
-            this.vy += physics?.gravity || 0.5;
+
+            // Gravity
+            this.vy += (PHYSICS?.GRAVITY || 0.6);
+            if (this.vy > (PHYSICS?.MAX_FALL_SPEED || 12)) {
+                this.vy = PHYSICS.MAX_FALL_SPEED;
+            }
         }
 
+        // --- Jump Input & Buffering ---
         if (this.onGround) {
-            this.coyoteTimer = 0.1;
+            this.coyoteTimer = 0.15;
         } else {
-            this.coyoteTimer -= dt;
+            this.coyoteTimer -= dtSec;
         }
 
-        if (input.keys[' ']) {
-            this.jumpBufferTimer = 0.1;
+        const jumpPressed = input.isPressed('Space') || input.isPressed(' ') || input.isPressed('ArrowUp') || input.isPressed('KeyW') || input.isPressed('w');
+        if (jumpPressed) {
+            this.jumpBufferTimer = 0.15;
         } else {
-            this.jumpBufferTimer -= dt;
+            this.jumpBufferTimer -= dtSec;
         }
 
         if (this.jumpBufferTimer > 0 && this.coyoteTimer > 0 && !this.isDashing) {
-            this.vy = -10; // jump force
+            this.vy = (PLAYER.JUMP_FORCE || -11);
             this.jumpBufferTimer = 0;
             this.coyoteTimer = 0;
             this.onGround = false;
         }
 
-        this.x += this.vx;
-        this.y += this.vy;
+        // --- Collisions with Platforms ---
+        this._handlePhysics(platforms);
 
-        if (this.y > 2000) {
+        // Fall into void check
+        if (this.y > 4000) {
             this.die();
         }
 
-        // Animation state logic
+        // --- Animation State ---
         if (this.state === 'HURT') {
             this.currentAnim = 'HURT';
         } else if (!this.onGround) {
             this.currentAnim = this.vy < 0 ? 'JUMP' : 'FALL';
         } else if (Math.abs(this.vx) > 0.5) {
-            this.currentAnim = input.keys['shift'] ? 'RUN' : 'WALK';
+            this.currentAnim = (input.isDown('Shift') || input.isDown('ShiftLeft')) ? 'RUN' : 'WALK';
         } else {
             this.currentAnim = 'IDLE';
         }
+        this.state = this.currentAnim;
 
+        // Frame update
         this.frameTimer += dt;
-        let frameDur = FRAME_DURATIONS ? FRAME_DURATIONS[this.currentAnim] : 0.1;
-        if (!frameDur) frameDur = 0.1;
-        if (this.frameTimer >= frameDur) {
+        const dur = (FRAME_DURATIONS && FRAME_DURATIONS[this.currentAnim]) ? FRAME_DURATIONS[this.currentAnim] : 150;
+        if (this.frameTimer >= dur) {
             this.frameTimer = 0;
-            this.frameIndex++;
+            this.frameIndex = (this.frameIndex + 1) % 4; // loop
         }
+    }
+
+    _handlePhysics(platforms) {
+        if (!platforms || platforms.length === 0) {
+            this.x += this.vx;
+            this.y += this.vy;
+            return;
+        }
+
+        // Horizontal Movement & Collisions
+        this.x += this.vx;
+        this.onWall = false;
+
+        for (const p of platforms) {
+            if (p.destroyed) continue;
+            if (p.type === 'one_way') continue; // Pass horizontally through one-way platforms
+
+            if (this._aabbOverlap(this, p)) {
+                if (this.vx > 0) {
+                    this.x = p.x - this.width;
+                    this.onWall = true;
+                } else if (this.vx < 0) {
+                    this.x = p.x + p.width;
+                    this.onWall = true;
+                }
+                this.vx = 0;
+            }
+        }
+
+        // Vertical Movement & Collisions
+        this.y += this.vy;
+        this.onGround = false;
+
+        for (const p of platforms) {
+            if (p.destroyed) continue;
+
+            if (p.type === 'one_way') {
+                // Only land on one-way platforms from above
+                if (this.vy >= 0 && (this.y + this.height - this.vy) <= p.y + 8 && this._aabbOverlap(this, p)) {
+                    this.y = p.y - this.height;
+                    this.vy = 0;
+                    this.onGround = true;
+                    if (p.type === 'moving' && p.moveX) {
+                        this.x += p.moveX * 0.016;
+                    }
+                }
+            } else {
+                if (this._aabbOverlap(this, p)) {
+                    if (this.vy > 0) {
+                        this.y = p.y - this.height;
+                        this.vy = 0;
+                        this.onGround = true;
+                        if (p.type === 'moving' && p.moveX) {
+                            this.x += p.moveX * 0.016;
+                        }
+                    } else if (this.vy < 0) {
+                        this.y = p.y + p.height;
+                        this.vy = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    _aabbOverlap(a, b) {
+        return a.x < b.x + b.width &&
+               a.x + a.width > b.x &&
+               a.y < b.y + b.height &&
+               a.y + a.height > b.y;
     }
 
     render(ctx, renderer, spriteSheet, camera) {
@@ -130,8 +235,8 @@ export default class Player {
         const drawX = this.x - camera.x;
         const drawY = this.y - camera.y;
 
-        if (this.invincibilityTimer > 0 && Math.floor(this.invincibilityTimer * 10) % 2 === 0) {
-            // flicker
+        // Invincibility flicker
+        if (this.invincible && Math.floor(performance.now() / 100) % 2 === 0) {
             return;
         }
 
@@ -141,79 +246,120 @@ export default class Player {
             ctx.scale(-1, 1);
         }
 
-        // Draw character (placeholder silhouette since no actual sprites)
-        ctx.fillStyle = '#223';
-        ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
-        
-        // Eyes
-        ctx.fillStyle = '#8ce'; // glowing eyes
-        ctx.fillRect(this.width / 4, -this.height / 4, 6, 6);
+        // --- Try rendering from sprite sheet if available ---
+        let drewSprite = false;
+        if (spriteSheet && SPRITE_DATA && SPRITE_DATA[this.currentAnim]) {
+            const frames = SPRITE_DATA[this.currentAnim];
+            const frame = frames[this.frameIndex % frames.length];
+            if (frame) {
+                ctx.drawImage(
+                    spriteSheet,
+                    frame.x, frame.y, frame.w, frame.h,
+                    -this.width / 2 - 8, -this.height / 2 - 16,
+                    this.width + 16, this.height + 16
+                );
+                drewSprite = true;
+            }
+        }
 
-        // Lantern
-        if (this.hasLantern) {
-            ctx.fillStyle = '#111';
-            ctx.fillRect(this.width / 2, 0, 4, 20); // staff
-            ctx.fillStyle = '#aa4';
-            ctx.fillRect(this.width / 2 - 2, -4, 8, 8); // lantern box
+        // --- Procedural High-Quality Silhouette Fallback / Overlay ---
+        if (!drewSprite) {
+            // Hood & Cloak (Dark Charcoal / Silhouette)
+            ctx.fillStyle = '#0f1118';
+            ctx.beginPath();
+            ctx.arc(0, -18, 14, Math.PI, 0); // Hood top
+            ctx.lineTo(16, 26);  // Cloak right
+            ctx.lineTo(-16, 26); // Cloak left
+            ctx.closePath();
+            ctx.fill();
+
+            // Inner Shadow face
+            ctx.fillStyle = '#05060a';
+            ctx.beginPath();
+            ctx.arc(0, -14, 9, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Glowing White/Cyan Eyes
+            ctx.fillStyle = '#e8f4ff';
+            ctx.shadowColor = 'rgba(160, 210, 255, 0.9)';
+            ctx.shadowBlur = 8;
+            ctx.fillRect(2, -16, 4, 3);
+            ctx.fillRect(7, -16, 4, 3);
+            ctx.shadowBlur = 0;
+
+            // Lantern Staff
+            if (this.hasLantern) {
+                // Staff rod
+                ctx.fillStyle = '#2d3340';
+                ctx.fillRect(14, -28, 3, 56);
+
+                // Lantern cage
+                ctx.fillStyle = '#404a5c';
+                ctx.fillRect(11, -34, 9, 10);
+
+                // Lantern glowing core
+                if (this.lanternActive) {
+                    ctx.fillStyle = '#fff7d9';
+                    ctx.shadowColor = 'rgba(255, 230, 140, 0.8)';
+                    ctx.shadowBlur = 12;
+                    ctx.fillRect(13, -32, 5, 6);
+                    ctx.shadowBlur = 0;
+                }
+            }
         }
 
         ctx.restore();
 
-        if (this.lanternActive) {
-            const lx = drawX + this.width / 2 + (this.width / 2 + 2) * this.facing;
-            const ly = drawY + this.height / 2 - 4;
-            
-            let grad = ctx.createRadialGradient(lx, ly, 0, lx, ly, 150);
-            grad.addColorStop(0, 'rgba(255, 255, 180, 0.5)');
-            grad.addColorStop(1, 'rgba(255, 255, 180, 0)');
-            ctx.fillStyle = grad;
-            ctx.beginPath();
-            ctx.arc(lx, ly, 150, 0, Math.PI * 2);
-            ctx.fill();
+        // Dash trail effect
+        if (this.isDashing) {
+            ctx.fillStyle = 'rgba(140, 180, 220, 0.2)';
+            ctx.fillRect(drawX - this.facing * 15, drawY, this.width, this.height);
         }
     }
 
-    takeDamage(amount) {
-        if (this.invincibilityTimer > 0 || this.state === 'DIE') return;
+    takeDamage(amount = 15) {
+        if (this.invincible || !this.active) return;
+
         this.health -= amount;
+        this.invincible = true;
+        this.invincibilityTimer = 1.0;
+        this.state = 'HURT';
+
         if (this.health <= 0) {
+            this.health = 0;
             this.die();
-        } else {
-            this.state = 'HURT';
-            this.invincibilityTimer = 1.0;
-            this.vy = -5; // knockback
         }
     }
 
-    heal(amount) {
-        if (this.state === 'DIE') return;
-        this.health = Math.min(100, this.health + amount);
+    heal(amount = 20) {
+        this.health = Math.min(this.maxHealth, this.health + amount);
     }
 
     die() {
-        this.state = 'DIE';
-        this.health = 0;
         this.active = false;
-        setTimeout(() => this.respawn(this.respawnX, this.respawnY), 1000);
+        this.state = 'DIE';
     }
 
     respawn(x, y) {
-        this.x = x;
-        this.y = y;
+        this.x = x !== undefined ? x : this.respawnX;
+        this.y = y !== undefined ? y : this.respawnY;
         this.vx = 0;
         this.vy = 0;
-        this.health = 100;
-        this.state = 'IDLE';
+        this.health = this.maxHealth;
         this.active = true;
-        this.invincibilityTimer = 2.0; // invulnerable on respawn
+        this.state = 'IDLE';
+        this.invincible = true;
+        this.invincibilityTimer = 1.5;
     }
 
     unlockAbility(ability) {
-        if (ability === 'dash') this.hasDash = true;
-        if (ability === 'lantern') this.hasLantern = true;
-        if (ability === 'spiritVision') this.hasSpiritVision = true;
-        if (ability === 'waterWalk') this.hasWaterWalk = true;
-        if (ability === 'memoryReconstruct') this.hasMemoryReconstruct = true;
+        switch (ability) {
+            case 'lantern': this.hasLantern = true; break;
+            case 'dash': this.hasDash = true; break;
+            case 'spiritVision': this.hasSpiritVision = true; break;
+            case 'waterWalk': this.hasWaterWalk = true; break;
+            case 'memoryReconstruct': this.hasMemoryReconstruct = true; break;
+        }
     }
 
     getBounds() {
@@ -222,19 +368,19 @@ export default class Player {
 
     getLanternPosition() {
         return {
-            x: this.x + this.width / 2 + (this.width / 2 + 2) * this.facing,
-            y: this.y + this.height / 2 - 4
+            x: this.x + this.width / 2 + (this.facing === 1 ? 16 : -16),
+            y: this.y + 12
         };
     }
 
     isLanternActive() {
-        return this.lanternActive;
+        return this.hasLantern && this.lanternActive;
     }
 
     dash() {
+        if (!this.hasDash || this.dashCooldown > 0 || this.isDashing) return;
         this.isDashing = true;
-        this.dashTimer = 0.2;
+        this.dashTimer = 0.18;
         this.dashCooldown = 1.0;
-        this.invincibilityTimer = 0.2;
     }
 }
