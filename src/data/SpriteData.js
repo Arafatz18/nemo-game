@@ -15,6 +15,8 @@ export const FRAME_DURATION = {
   DIE: 200
 };
 
+export const FRAME_DURATIONS = FRAME_DURATION;
+
 const startX = 200;
 const w = 56;
 const h = 96;
