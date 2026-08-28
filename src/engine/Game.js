@@ -847,10 +847,11 @@ export default class Game {
         this.state = STATE.PLAYING;
 
         // Show intro dialogue if any
-        if (chapterIntro?.introText) {
+        const introMsg = chapterIntro?.intro || chapterIntro?.introText;
+        if (introMsg) {
             this.state = STATE.DIALOGUE;
             this.dialogueSystem.showDialogue([
-                { speaker: null, text: chapterIntro.introText, duration: 0 }
+                { speaker: null, text: introMsg, duration: 0 }
             ]);
         }
 

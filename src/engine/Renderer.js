@@ -1,25 +1,36 @@
+/**
+ * Renderer.js – Multi-Layer Canvas Renderer
+ * 
+ * Manages 4 stacked canvas layers (bg, game, light, ui)
+ * and provides drawing utilities for sprites, lights, and primitives.
+ */
+
 export default class Renderer {
     constructor(container) {
         this.container = container;
         
-        // Create canvases
-        this.bgCanvas = document.createElement('canvas');
-        this.gameCanvas = document.createElement('canvas');
-        this.lightCanvas = document.createElement('canvas');
-        this.uiCanvas = document.createElement('canvas');
+        // Grab canvases from DOM or create them
+        this.bgCanvas = container.querySelector('#bg-canvas') || document.createElement('canvas');
+        this.gameCanvas = container.querySelector('#game-canvas') || document.createElement('canvas');
+        this.lightCanvas = container.querySelector('#light-canvas') || document.createElement('canvas');
+        this.uiCanvas = container.querySelector('#ui-canvas') || document.createElement('canvas');
         
-        // Z-indices
-        this.bgCanvas.style.zIndex = '1';
-        this.gameCanvas.style.zIndex = '2';
-        this.lightCanvas.style.zIndex = '3';
-        this.uiCanvas.style.zIndex = '4';
-        
+        this.bgCanvas.id = 'bg-canvas';
+        this.gameCanvas.id = 'game-canvas';
+        this.lightCanvas.id = 'light-canvas';
+        this.uiCanvas.id = 'ui-canvas';
+
         const canvases = [this.bgCanvas, this.gameCanvas, this.lightCanvas, this.uiCanvas];
-        canvases.forEach(canvas => {
+        canvases.forEach((canvas, idx) => {
             canvas.style.position = 'absolute';
             canvas.style.top = '0';
             canvas.style.left = '0';
-            this.container.appendChild(canvas);
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.zIndex = (idx + 1).toString();
+            if (!canvas.parentNode) {
+                this.container.appendChild(canvas);
+            }
         });
         
         this.ctxBg = this.bgCanvas.getContext('2d');
@@ -35,16 +46,19 @@ export default class Renderer {
         };
 
         this.resize();
-        window.addEventListener('resize', () => this.resize());
+        this._resizeHandler = () => this.resize();
+        window.addEventListener('resize', this._resizeHandler);
     }
 
     resize() {
-        const width = window.innerWidth;
-        const height = window.innerHeight;
+        const width = window.innerWidth || 1280;
+        const height = window.innerHeight || 720;
         
         Object.values(this.contexts).forEach(ctx => {
-            ctx.canvas.width = width;
-            ctx.canvas.height = height;
+            if (ctx && ctx.canvas) {
+                ctx.canvas.width = width;
+                ctx.canvas.height = height;
+            }
         });
     }
 
@@ -62,20 +76,19 @@ export default class Renderer {
     }
 
     getContext(layer) {
-        return this.contexts[layer];
+        return this.contexts[layer] || null;
     }
 
     drawSprite(ctx, image, sx, sy, sw, sh, dx, dy, dw, dh, flipX = false) {
         if (!image) return;
-        this.save(ctx);
+        ctx.save();
         if (flipX) {
-            ctx.translate(dx + dw, dy);
             ctx.scale(-1, 1);
-            ctx.drawImage(image, sx, sy, sw, sh, 0, 0, dw, dh);
+            ctx.drawImage(image, sx, sy, sw, sh, -dx - dw, dy, dw, dh);
         } else {
             ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
         }
-        this.restore(ctx);
+        ctx.restore();
     }
 
     drawRect(ctx, x, y, w, h, color) {
@@ -91,56 +104,54 @@ export default class Renderer {
     }
 
     drawText(ctx, text, x, y, options = {}) {
-        ctx.font = options.font || '20px Arial';
+        ctx.save();
+        ctx.font = options.font || '16px monospace';
         ctx.fillStyle = options.color || '#ffffff';
         ctx.textAlign = options.align || 'left';
-        ctx.textBaseline = options.baseline || 'top';
         
         if (options.shadow) {
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 2;
-            ctx.shadowOffsetY = 2;
+            ctx.shadowColor = options.shadowColor || 'black';
+            ctx.shadowBlur = options.shadowBlur || 4;
+            ctx.shadowOffsetX = options.shadowOffsetX || 0;
+            ctx.shadowOffsetY = options.shadowOffsetY || 0;
         }
-        
+
         ctx.fillText(text, x, y);
-        
-        if (options.shadow) {
-            ctx.shadowColor = 'transparent';
-        }
+        ctx.restore();
     }
 
-    applyDarkness(ambientLight) {
-        const ctx = this.ctxLight;
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.fillStyle = `rgba(10, 12, 20, ${1 - ambientLight})`;
-        ctx.fillRect(0, 0, this.getWidth(), this.getHeight());
-        ctx.globalCompositeOperation = 'destination-out';
+    applyDarkness(ambientLight = 0.85) {
+        const width = this.getWidth();
+        const height = this.getHeight();
+        this.ctxLight.fillStyle = `rgba(8, 10, 18, ${ambientLight})`;
+        this.ctxLight.fillRect(0, 0, width, height);
     }
 
-    drawLight(x, y, radius, color, intensity) {
-        const ctx = this.ctxLight;
-        const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-        // Using rgba for white cutout
-        gradient.addColorStop(0, `rgba(255, 255, 255, ${intensity})`);
-        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    drawLight(x, y, radius, color = '#ffffff', intensity = 1) {
+        this.ctxLight.save();
+        this.ctxLight.globalCompositeOperation = 'destination-out';
         
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fill();
+        const grad = this.ctxLight.createRadialGradient(x, y, 0, x, y, radius);
+        grad.addColorStop(0, `rgba(0, 0, 0, ${intensity})`);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        
+        this.ctxLight.fillStyle = grad;
+        this.ctxLight.beginPath();
+        this.ctxLight.arc(x, y, radius, 0, Math.PI * 2);
+        this.ctxLight.fill();
+        this.ctxLight.restore();
     }
 
     createGradient(ctx, x, y, radius, colors) {
-        const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-        colors.forEach((color, i) => {
-            gradient.addColorStop(i / (colors.length - 1), color);
+        const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+        colors.forEach(stop => {
+            grad.addColorStop(stop.offset, stop.color);
         });
-        return gradient;
+        return grad;
     }
 
     setAlpha(ctx, alpha) {
-        ctx.globalAlpha = alpha;
+        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
     }
 
     save(ctx) {
@@ -152,20 +163,14 @@ export default class Renderer {
     }
 
     getWidth() {
-        return this.gameCanvas.width;
+        return this.bgCanvas.width || window.innerWidth || 1280;
     }
 
     getHeight() {
-        return this.gameCanvas.height;
+        return this.bgCanvas.height || window.innerHeight || 720;
     }
 
     destroy() {
-        window.removeEventListener('resize', this.resize);
-        const canvases = [this.bgCanvas, this.gameCanvas, this.lightCanvas, this.uiCanvas];
-        canvases.forEach(canvas => {
-            if (canvas.parentNode) {
-                canvas.parentNode.removeChild(canvas);
-            }
-        });
+        window.removeEventListener('resize', this._resizeHandler);
     }
 }

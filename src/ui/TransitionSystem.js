@@ -1,12 +1,17 @@
+/**
+ * TransitionSystem.js – Scene Transitions & Title Cards
+ * 
+ * Handles screen fade-in, fade-out, chapter title cards, and death transitions.
+ */
+
 export default class TransitionSystem {
     constructor() {
         this.active = false;
-        this.type = 'fade'; // fade, sweep, iris
+        this.type = 'fade'; // fade, sweep, iris, chapter
         this.progress = 0;
-        this.direction = 'in'; // 'in' = fading in (becoming visible to player), 'out' = fading out (screen goes black)
+        this.direction = 'in'; // 'in' = clearing to transparent, 'out' = fading to black
         this.color = '#000000';
-        this.callback = null;
-        this.duration = 1;
+        this.duration = 1000; // stored in ms
         this.timer = 0;
         
         // For chapter transitions
@@ -18,68 +23,71 @@ export default class TransitionSystem {
         this.resolvePromise = null;
     }
 
-    fadeIn(duration = 1, color = '#000000') {
+    _normalizeDuration(duration) {
+        if (!duration) return 800;
+        return duration < 20 ? duration * 1000 : duration;
+    }
+
+    fadeIn(duration = 1000, color = '#000000') {
+        const d = this._normalizeDuration(duration);
         return new Promise((resolve) => {
             this.active = true;
             this.type = 'fade';
             this.direction = 'in';
             this.color = color;
-            this.duration = duration;
-            this.timer = duration; // Start fully covered
+            this.duration = d;
+            this.timer = d;
             this.progress = 1;
             this.state = 'in';
             this.resolvePromise = resolve;
         });
     }
 
-    fadeOut(duration = 1, color = '#000000') {
+    fadeOut(duration = 1000, color = '#000000') {
+        const d = this._normalizeDuration(duration);
         return new Promise((resolve) => {
             this.active = true;
             this.type = 'fade';
             this.direction = 'out';
             this.color = color;
-            this.duration = duration;
-            this.timer = 0; // Start fully clear
+            this.duration = d;
+            this.timer = 0;
             this.progress = 0;
             this.state = 'out';
             this.resolvePromise = resolve;
         });
     }
 
-    async transition(inDuration = 1, outDuration = 1, callback = null, type = 'fade') {
-        this.type = type;
-        await this.fadeOut(outDuration);
-        if (callback) callback();
-        await this.fadeIn(inDuration);
-    }
-
-    async chapterTransition(chapterName, subtitle) {
+    async chapterTransition(chapterName, subtitle, duration = 2000) {
         this.type = 'chapter';
         this.chapterTitle = chapterName;
         this.chapterSubtitle = subtitle;
-        this.holdTimer = 3;
+        this.holdTimer = 1800; // ms
         
-        await this.fadeOut(1);
+        await this.fadeOut(600);
         
         return new Promise((resolve) => {
             this.state = 'hold';
             this.resolvePromise = () => {
-                this.fadeIn(1).then(resolve);
+                this.fadeIn(800).then(resolve);
             };
         });
     }
 
     async deathTransition(callback) {
-        await this.fadeOut(2, '#550000');
+        await this.fadeOut(1200, '#4a0c0c');
         if (callback) callback();
-        await this.fadeIn(1);
+        await this.fadeIn(800);
     }
 
     update(dt) {
-        if (!this.active) return;
+        if (!this.active && this.state === 'idle') return;
+
+        // dt is expected in ms (typically ~16.6ms)
+        const dtMs = dt < 1 ? dt * 1000 : dt;
 
         if (this.state === 'out') {
-            this.timer += dt;
+            this.timer += dtMs;
             this.progress = Math.min(1, this.timer / this.duration);
             if (this.progress >= 1) {
                 if (this.resolvePromise) {
@@ -92,7 +100,7 @@ export default class TransitionSystem {
                 }
             }
         } else if (this.state === 'in') {
-            this.timer -= dt;
+            this.timer -= dtMs;
             this.progress = Math.max(0, this.timer / this.duration);
             if (this.progress <= 0) {
                 this.active = false;
@@ -104,7 +112,7 @@ export default class TransitionSystem {
                 }
             }
         } else if (this.state === 'hold') {
-            this.holdTimer -= dt;
+            this.holdTimer -= dtMs;
             if (this.holdTimer <= 0) {
                 if (this.resolvePromise) {
                     const res = this.resolvePromise;
@@ -113,6 +121,10 @@ export default class TransitionSystem {
                 }
             }
         }
+    }
+
+    isActive() {
+        return this.active || this.state !== 'idle';
     }
 
     render(ctx, canvasWidth, canvasHeight) {
@@ -126,35 +138,27 @@ export default class TransitionSystem {
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
         } else if (this.type === 'sweep') {
             ctx.fillStyle = this.color;
+            ctx.globalAlpha = 1;
             ctx.fillRect(0, 0, canvasWidth * this.progress, canvasHeight);
-        } else if (this.type === 'iris') {
-            ctx.fillStyle = this.color;
-            const radius = Math.max(canvasWidth, canvasHeight) * (1 - this.progress);
-            ctx.beginPath();
-            ctx.arc(canvasWidth / 2, canvasHeight / 2, radius, 0, Math.PI * 2);
-            ctx.rect(canvasWidth, 0, -canvasWidth, canvasHeight);
-            ctx.fill();
         }
 
-        if (this.type === 'chapter' && (this.state === 'hold' || (this.state === 'out' && this.progress > 0.8) || (this.state === 'in' && this.progress > 0.8))) {
-            ctx.globalAlpha = 1;
-            if (this.state === 'out') ctx.globalAlpha = (this.progress - 0.8) * 5;
-            if (this.state === 'in') ctx.globalAlpha = (this.progress - 0.8) * 5;
-            
-            ctx.fillStyle = '#ffffff';
+        // Render chapter title card during hold or fade
+        if (this.type === 'chapter' && (this.state === 'hold' || this.progress > 0.5)) {
             ctx.textAlign = 'center';
-            ctx.font = '60px Georgia, serif';
-            ctx.fillText(this.chapterTitle, canvasWidth / 2, canvasHeight / 2 - 30);
-            
-            ctx.font = '30px Georgia, serif';
-            ctx.fillStyle = '#aaaaaa';
-            ctx.fillText(this.chapterSubtitle, canvasWidth / 2, canvasHeight / 2 + 30);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '48px Georgia, serif';
+            ctx.shadowColor = 'rgba(140, 180, 220, 0.8)';
+            ctx.shadowBlur = 15;
+            ctx.fillText(this.chapterTitle || '', canvasWidth / 2, canvasHeight / 2 - 20);
+
+            if (this.chapterSubtitle) {
+                ctx.font = '20px Georgia, serif';
+                ctx.fillStyle = '#8caad2';
+                ctx.shadowBlur = 0;
+                ctx.fillText(this.chapterSubtitle, canvasWidth / 2, canvasHeight / 2 + 30);
+            }
         }
 
         ctx.restore();
-    }
-
-    isActive() {
-        return this.active || this.state === 'hold';
     }
 }
