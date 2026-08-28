@@ -1,0 +1,350 @@
+/* ============================================
+   NEMO – The Last Drop
+   Global Styles
+   ============================================ */
+
+/* Reset & Base */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    color: #c8ccd4;
+    cursor: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Custom Cursor */
+#custom-cursor {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(180, 200, 220, 0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+    transition: width 0.15s, height 0.15s, border-color 0.15s;
+    mix-blend-mode: difference;
+}
+
+#custom-cursor.active {
+    width: 14px;
+    height: 14px;
+    border-color: rgba(140, 180, 220, 0.9);
+}
+
+/* Game Container */
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #050608;
+}
+
+/* Canvas Layers – stacked absolutely */
+#game-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+#bg-canvas    { z-index: 1; }
+#game-canvas  { z-index: 2; }
+#light-canvas { z-index: 3; mix-blend-mode: multiply; }
+#ui-canvas    { z-index: 4; }
+
+/* Loading Screen */
+#loading-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #050608;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: opacity 1.5s ease;
+}
+
+#loading-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#loading-screen h1 {
+    font-size: 4rem;
+    font-weight: 300;
+    letter-spacing: 1.2rem;
+    color: #dde1e8;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 40px rgba(140, 170, 210, 0.3),
+                 0 0 80px rgba(100, 130, 180, 0.15);
+    animation: titlePulse 4s ease-in-out infinite;
+}
+
+#loading-screen .subtitle {
+    font-size: 1rem;
+    font-weight: 400;
+    letter-spacing: 0.5rem;
+    color: rgba(160, 175, 200, 0.6);
+    margin-bottom: 3rem;
+    font-style: italic;
+}
+
+#loading-bar-container {
+    width: 300px;
+    height: 2px;
+    background: rgba(100, 120, 150, 0.15);
+    border-radius: 1px;
+    overflow: hidden;
+    position: relative;
+}
+
+#loading-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, 
+        rgba(100, 140, 200, 0.4),
+        rgba(140, 170, 210, 0.8),
+        rgba(100, 140, 200, 0.4));
+    border-radius: 1px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(120, 160, 210, 0.4);
+}
+
+#loading-text {
+    margin-top: 1.5rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.15rem;
+    color: rgba(140, 160, 190, 0.4);
+    font-style: italic;
+}
+
+/* Title Pulse Animation */
+@keyframes titlePulse {
+    0%, 100% { text-shadow: 0 0 40px rgba(140, 170, 210, 0.3), 0 0 80px rgba(100, 130, 180, 0.15); }
+    50%      { text-shadow: 0 0 60px rgba(140, 170, 210, 0.5), 0 0 120px rgba(100, 130, 180, 0.25); }
+}
+
+/* Click to Start Overlay */
+#start-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(5, 6, 8, 0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    cursor: pointer;
+    transition: opacity 0.8s ease;
+}
+
+#start-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#start-overlay .prompt {
+    font-size: 1rem;
+    letter-spacing: 0.4rem;
+    color: rgba(180, 195, 215, 0.7);
+    animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.02); }
+}
+
+/* Sensitivity Warning */
+#content-warning {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #050608;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 2rem;
+    text-align: center;
+    transition: opacity 1s ease;
+}
+
+#content-warning.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#content-warning h2 {
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: 0.3rem;
+    color: rgba(200, 180, 160, 0.9);
+    margin-bottom: 1.5rem;
+}
+
+#content-warning p {
+    font-size: 0.85rem;
+    line-height: 1.8;
+    max-width: 500px;
+    color: rgba(160, 165, 175, 0.7);
+    margin-bottom: 0.5rem;
+}
+
+#content-warning .helpline {
+    font-size: 0.75rem;
+    color: rgba(120, 160, 200, 0.8);
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+}
+
+#content-warning button {
+    background: none;
+    border: 1px solid rgba(140, 160, 190, 0.3);
+    color: rgba(180, 195, 215, 0.8);
+    padding: 0.6rem 2rem;
+    font-family: 'Georgia', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+
+#content-warning button:hover {
+    border-color: rgba(140, 170, 210, 0.6);
+    background: rgba(140, 170, 210, 0.08);
+    color: #dde1e8;
+}
+
+/* Performance Stats (debug) */
+#debug-stats {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 1000;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 11px;
+    color: rgba(120, 160, 200, 0.6);
+    pointer-events: none;
+    display: none;
+}
+
+#debug-stats.visible {
+    display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #loading-screen h1 {
+        font-size: 2.5rem;
+        letter-spacing: 0.8rem;
+    }
+    
+    #loading-screen .subtitle {
+        font-size: 0.8rem;
+        letter-spacing: 0.3rem;
+    }
+    
+    #loading-bar-container {
+        width: 200px;
+    }
+    
+    #content-warning h2 {
+        font-size: 1.1rem;
+    }
+    
+    #content-warning p {
+        font-size: 0.75rem;
+    }
+}
+
+/* Touch controls (mobile) */
+#touch-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    z-index: 5;
+    display: none;
+    justify-content: space-between;
+    padding: 0 20px;
+    pointer-events: none;
+}
+
+@media (pointer: coarse) {
+    #touch-controls {
+        display: flex;
+    }
+    
+    body {
+        cursor: auto;
+    }
+    
+    #custom-cursor {
+        display: none;
+    }
+}
+
+.touch-dpad {
+    pointer-events: auto;
+    display: grid;
+    grid-template-columns: 60px 60px 60px;
+    grid-template-rows: 60px 60px;
+    gap: 4px;
+    opacity: 0.3;
+}
+
+.touch-btn {
+    pointer-events: auto;
+    width: 60px;
+    height: 60px;
+    border: 1px solid rgba(140, 170, 210, 0.4);
+    border-radius: 12px;
+    background: rgba(20, 25, 35, 0.5);
+    color: rgba(180, 195, 215, 0.7);
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.4;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.touch-btn:active {
+    opacity: 0.8;
+    background: rgba(60, 80, 120, 0.3);
+}
+
+.touch-actions {
+    pointer-events: auto;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    opacity: 0.3;
+}

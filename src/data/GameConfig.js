@@ -1,0 +1,86 @@
+export const GAME_WIDTH = 1280;
+export const GAME_HEIGHT = 720;
+export const TILE_SIZE = 32;
+
+export const PHYSICS = {
+  GRAVITY: 0.6,
+  MAX_FALL_SPEED: 12,
+  FRICTION: 0.85,
+  AIR_RESISTANCE: 0.95
+};
+
+export const PLAYER = {
+  WALK_SPEED: 3,
+  RUN_SPEED: 5.5,
+  JUMP_FORCE: -11,
+  CLIMB_SPEED: 2,
+  WIDTH: 40,
+  HEIGHT: 64,
+  LANTERN_RADIUS: 150,
+  LANTERN_FLICKER: 0.05,
+  DASH_SPEED: 12,
+  DASH_DURATION: 200,
+  DASH_COOLDOWN: 1000
+};
+
+export const THIRST = {
+  MAX: 100,
+  DECREASE_RATE: 0.015,
+  WATER_DROP_RESTORE: 15,
+  WELL_RESTORE: 40,
+  SPRING_RESTORE: 100,
+  BLUR_THRESHOLD: 0.5,
+  HALLUCINATION_THRESHOLD: 0.25,
+  CRITICAL_THRESHOLD: 0.1
+};
+
+export const MONSTERS = {
+  WATCHER: { SPEED: 2, RANGE: 300, DAMAGE: 15 },
+  WANDERER: { SPEED: 1.5, RANGE: 200, DAMAGE: 10 },
+  SHADOW: { SPEED: 3, RANGE: 400, DAMAGE: 20 },
+  REGRET_BEAST: { SPEED: 4, RANGE: 500, DAMAGE: 35 }
+};
+
+export const CAMERA = {
+  SMOOTHING: 0.1,
+  LOOK_AHEAD: 100,
+  SHAKE_INTENSITY: 5,
+  SHAKE_DURATION: 200
+};
+
+export const PARTICLES = {
+  POOL_SIZE: 500,
+  LIFETIME: 60,
+  GRAVITY: 0.1
+};
+
+export const AUDIO = {
+  MASTER_VOLUME: 1.0,
+  SFX_VOLUME: 0.8,
+  BGM_VOLUME: 0.6
+};
+
+export const COLORS = {
+  BACKGROUND: '#0a0a0c',
+  FOG: '#1c222e',
+  HIGHLIGHT: '#5c748c',
+  NEMO: '#ffffff',
+  MONSTER_EYE: '#ff3333',
+  WATER: '#4fa4d1',
+  MEMORY: '#d4ebf2',
+  PLATFORM: '#2a2e35'
+};
+
+export const CHAPTERS = {
+  CHAPTER_1: { NAME: 'Despair Forest', FOG_COLOR: '#1a1f26', WEATHER: 'rain' },
+  CHAPTER_2: { NAME: 'Ruins of Memory', FOG_COLOR: '#15181e', WEATHER: 'wind' },
+  CHAPTER_3: { NAME: 'The Deep', FOG_COLOR: '#0d1116', WEATHER: 'none' },
+  CHAPTER_4: { NAME: 'Echoes of Regret', FOG_COLOR: '#1c171e', WEATHER: 'storm' },
+  CHAPTER_5: { NAME: 'The Beast Within', FOG_COLOR: '#241a1a', WEATHER: 'ash' },
+  CHAPTER_6: { NAME: 'Acceptance', FOG_COLOR: '#2c333a', WEATHER: 'clear' }
+};
+
+export default {
+  GAME_WIDTH, GAME_HEIGHT, TILE_SIZE, PHYSICS, PLAYER, THIRST, MONSTERS,
+  CAMERA, PARTICLES, AUDIO, COLORS, CHAPTERS
+};
