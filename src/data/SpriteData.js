@@ -31,7 +31,9 @@ const genFrames = (count, startCol, rowY) => {
       x: startX + (startCol + i) * (w + gap),
       y: rowY,
       width: w,
-      height: h
+      height: h,
+      w: w,
+      h: h
     });
   }
   return frames;

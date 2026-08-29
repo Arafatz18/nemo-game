@@ -616,7 +616,7 @@ export default class Game {
         // --- UI Layer ---
         const nearInteractable = this._checkNearInteractable();
         this.hud.update(
-            1,
+            0.016,
             this.thirstSystem.getThirstPercent(),
             chapterData,
             nearInteractable,

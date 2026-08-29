@@ -251,12 +251,14 @@ export default class Player {
         if (spriteSheet && SPRITE_DATA && SPRITE_DATA[this.currentAnim]) {
             const frames = SPRITE_DATA[this.currentAnim];
             const frame = frames[this.frameIndex % frames.length];
-            if (frame) {
+            if (frame && (frame.width || frame.w) && (frame.height || frame.h)) {
+                const fw = frame.width || frame.w;
+                const fh = frame.height || frame.h;
                 ctx.drawImage(
                     spriteSheet,
-                    frame.x, frame.y, frame.w, frame.h,
-                    -this.width / 2 - 8, -this.height / 2 - 16,
-                    this.width + 16, this.height + 16
+                    frame.x, frame.y, fw, fh,
+                    -this.width / 2 - 12, -this.height / 2 - 20,
+                    this.width + 24, this.height + 24
                 );
                 drewSprite = true;
             }
@@ -306,6 +308,19 @@ export default class Player {
                     ctx.shadowBlur = 0;
                 }
             }
+        }
+
+        // Always add glowing aura around lantern tip
+        if (this.hasLantern && this.lanternActive) {
+            const flicker = Math.sin(performance.now() * 0.008) * 4;
+            const grad = ctx.createRadialGradient(16, -28, 2, 16, -28, 36 + flicker);
+            grad.addColorStop(0, 'rgba(255, 240, 180, 0.6)');
+            grad.addColorStop(0.4, 'rgba(220, 190, 120, 0.25)');
+            grad.addColorStop(1, 'rgba(200, 170, 100, 0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(16, -28, 36 + flicker, 0, Math.PI * 2);
+            ctx.fill();
         }
 
         ctx.restore();
