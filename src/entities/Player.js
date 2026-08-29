@@ -5,11 +5,11 @@
  * abilities (Lantern, Dash, Spirit Vision, Water Walking), and rendering.
  */
 
-import { PLAYER, PHYSICS, COLORS } from '../data/GameConfig.js';
+import { PLAYER, PHYSICS } from '../data/GameConfig.js';
 import { SPRITE_DATA, FRAME_DURATIONS } from '../data/SpriteData.js';
 
 export default class Player {
-    constructor(x = 100, y = 300) {
+    constructor(x = 150, y = 460) {
         this.x = x;
         this.y = y;
         this.width = PLAYER.WIDTH || 40;
@@ -57,7 +57,6 @@ export default class Player {
     update(input, physics, platforms, dt) {
         if (!this.active || this.state === 'DIE') return;
 
-        // Convert dt from ms to seconds if needed (Game.js passes ~16.6ms)
         const dtSec = dt > 1 ? dt / 1000 : dt;
 
         if (this.invincibilityTimer > 0) {
@@ -86,11 +85,11 @@ export default class Player {
                 this.isDashing = false;
             }
         } else {
-            const isRun = input.isDown('Shift') || input.isDown('ShiftLeft') || input.isDown('ShiftRight');
-            const maxSpeed = isRun ? (PLAYER.RUN_SPEED || 5.5) : (PLAYER.WALK_SPEED || 3.2);
+            const isRun = input.isDown('shift');
+            const maxSpeed = isRun ? (PLAYER.RUN_SPEED || 5.5) : (PLAYER.WALK_SPEED || 3.5);
             
-            const movingLeft = input.isDown('ArrowLeft') || input.isDown('KeyA') || input.isDown('a');
-            const movingRight = input.isDown('ArrowRight') || input.isDown('KeyD') || input.isDown('d');
+            const movingLeft = input.isDown('arrowleft');
+            const movingRight = input.isDown('arrowright');
 
             if (movingLeft && !movingRight) {
                 this.vx = -maxSpeed;
@@ -99,7 +98,7 @@ export default class Player {
                 this.vx = maxSpeed;
                 this.facing = 1;
             } else {
-                this.vx *= 0.75;
+                this.vx *= 0.7;
                 if (Math.abs(this.vx) < 0.1) this.vx = 0;
             }
 
@@ -117,7 +116,7 @@ export default class Player {
             this.coyoteTimer -= dtSec;
         }
 
-        const jumpPressed = input.isPressed('Space') || input.isPressed(' ') || input.isPressed('ArrowUp') || input.isPressed('KeyW') || input.isPressed('w');
+        const jumpPressed = input.isPressed('space') || input.isPressed('arrowup');
         if (jumpPressed) {
             this.jumpBufferTimer = 0.15;
         } else {
@@ -131,11 +130,11 @@ export default class Player {
             this.onGround = false;
         }
 
-        // --- Collisions with Platforms ---
+        // --- Physics & Collision Movement ---
         this._handlePhysics(platforms);
 
         // Fall into void check
-        if (this.y > 4000) {
+        if (this.y > 1500) {
             this.die();
         }
 
@@ -144,8 +143,8 @@ export default class Player {
             this.currentAnim = 'HURT';
         } else if (!this.onGround) {
             this.currentAnim = this.vy < 0 ? 'JUMP' : 'FALL';
-        } else if (Math.abs(this.vx) > 0.5) {
-            this.currentAnim = (input.isDown('Shift') || input.isDown('ShiftLeft')) ? 'RUN' : 'WALK';
+        } else if (Math.abs(this.vx) > 0.4) {
+            this.currentAnim = input.isDown('shift') ? 'RUN' : 'WALK';
         } else {
             this.currentAnim = 'IDLE';
         }
@@ -156,7 +155,7 @@ export default class Player {
         const dur = (FRAME_DURATIONS && FRAME_DURATIONS[this.currentAnim]) ? FRAME_DURATIONS[this.currentAnim] : 150;
         if (this.frameTimer >= dur) {
             this.frameTimer = 0;
-            this.frameIndex = (this.frameIndex + 1) % 4; // loop
+            this.frameIndex = (this.frameIndex + 1) % 4;
         }
     }
 
@@ -167,18 +166,18 @@ export default class Player {
             return;
         }
 
-        // Horizontal Movement & Collisions
+        // 1. Move on X axis
+        const oldX = this.x;
         this.x += this.vx;
         this.onWall = false;
 
         for (const p of platforms) {
-            if (p.destroyed) continue;
-            if (p.type === 'one_way') continue; // Pass horizontally through one-way platforms
+            if (p.destroyed || p.type === 'one_way') continue;
 
-            // Only collide with walls that overlap player torso/body (not the floor below feet)
-            const isWallOverlap = (this.y + this.height - 8 > p.y) && (this.y + 8 < p.y + p.height);
-
-            if (isWallOverlap && this._aabbOverlap(this, p)) {
+            // Only check vertical wall overlap if platform overlaps player torso
+            const isTorsoOverlap = (this.y + this.height - 10 > p.y) && (this.y + 10 < p.y + p.height);
+            
+            if (isTorsoOverlap && this._aabbOverlap(this, p)) {
                 if (this.vx > 0) {
                     this.x = p.x - this.width;
                     this.onWall = true;
@@ -190,7 +189,8 @@ export default class Player {
             }
         }
 
-        // Vertical Movement & Collisions
+        // 2. Move on Y axis
+        const oldY = this.y;
         this.y += this.vy;
         this.onGround = false;
 
@@ -198,25 +198,31 @@ export default class Player {
             if (p.destroyed) continue;
 
             if (p.type === 'one_way') {
-                // Only land on one-way platforms from above
-                if (this.vy >= 0 && (this.y + this.height - this.vy) <= p.y + 12 && this._aabbOverlap(this, p)) {
-                    this.y = p.y - this.height;
-                    this.vy = 0;
-                    this.onGround = true;
-                    if (p.type === 'moving' && p.moveX) {
-                        this.x += p.moveX * 0.016;
-                    }
-                }
-            } else {
-                if (this._aabbOverlap(this, p)) {
-                    if (this.vy > 0) {
+                // Land on one-way platform from above
+                if (this.vy >= 0 && (oldY + this.height) <= p.y + 10 && (this.y + this.height) >= p.y) {
+                    // Check horizontal overlap
+                    if (this.x + this.width > p.x && this.x < p.x + p.width) {
                         this.y = p.y - this.height;
                         this.vy = 0;
                         this.onGround = true;
                         if (p.type === 'moving' && p.moveX) {
                             this.x += p.moveX * 0.016;
                         }
-                    } else if (this.vy < 0) {
+                    }
+                }
+            } else {
+                // Solid platform
+                if (this._aabbOverlap(this, p)) {
+                    if (this.vy > 0 && oldY + this.height <= p.y + 16) {
+                        // Landing on top
+                        this.y = p.y - this.height;
+                        this.vy = 0;
+                        this.onGround = true;
+                        if (p.type === 'moving' && p.moveX) {
+                            this.x += p.moveX * 0.016;
+                        }
+                    } else if (this.vy < 0 && oldY >= p.y + p.height - 16) {
+                        // Hitting ceiling from below
                         this.y = p.y + p.height;
                         this.vy = 0;
                     }
@@ -269,12 +275,12 @@ export default class Player {
 
         // --- Procedural High-Quality Silhouette Fallback / Overlay ---
         if (!drewSprite) {
-            // Hood & Cloak (Dark Charcoal / Silhouette)
+            // Hood & Cloak
             ctx.fillStyle = '#0f1118';
             ctx.beginPath();
-            ctx.arc(0, -18, 14, Math.PI, 0); // Hood top
-            ctx.lineTo(16, 26);  // Cloak right
-            ctx.lineTo(-16, 26); // Cloak left
+            ctx.arc(0, -18, 14, Math.PI, 0);
+            ctx.lineTo(16, 26);
+            ctx.lineTo(-16, 26);
             ctx.closePath();
             ctx.fill();
 
@@ -294,15 +300,11 @@ export default class Player {
 
             // Lantern Staff
             if (this.hasLantern) {
-                // Staff rod
                 ctx.fillStyle = '#2d3340';
                 ctx.fillRect(14, -28, 3, 56);
-
-                // Lantern cage
                 ctx.fillStyle = '#404a5c';
                 ctx.fillRect(11, -34, 9, 10);
 
-                // Lantern glowing core
                 if (this.lanternActive) {
                     ctx.fillStyle = '#fff7d9';
                     ctx.shadowColor = 'rgba(255, 230, 140, 0.8)';

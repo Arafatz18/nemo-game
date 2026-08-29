@@ -202,6 +202,9 @@ export default class Game {
         const alpha = this.accumulator / this.fixedDt;
         this._render(alpha);
 
+        // Clear one-shot input presses once per animation frame
+        this.input.update();
+
         // FPS counter
         this.frameCount++;
         this.fpsTime += elapsed;
@@ -245,9 +248,6 @@ export default class Game {
                 // Just wait for transition to complete
                 break;
         }
-
-        // Update input at end of frame
-        this.input.update();
     }
 
     _updateMenu(dt) {
