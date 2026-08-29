@@ -610,8 +610,8 @@ export default class Game {
         // --- Weather overlay (screen space) ---
         this.weatherSystem.render(gameCtx, w, h);
 
-        // --- Post-Processing (screen space) ---
-        this.postProcessing.render(uiCtx, w, h);
+        // --- Post-Processing on Game Layer ---
+        this.postProcessing.render(gameCtx, w, h);
 
         // --- UI Layer ---
         const nearInteractable = this._checkNearInteractable();

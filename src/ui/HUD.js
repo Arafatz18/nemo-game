@@ -1,4 +1,11 @@
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, THIRST } from '../data/GameConfig.js';
+/**
+ * HUD.js – Heads-Up Display for NEMO
+ * 
+ * Displays thirst bar, memory fragment counter, chapter titles,
+ * interaction prompts, and controls helper hint.
+ */
+
+import { COLORS } from '../data/GameConfig.js';
 
 export default class HUD {
     constructor() {
@@ -9,7 +16,7 @@ export default class HUD {
             name: '',
             subtitle: '',
             alpha: 0,
-            state: 'idle', // idle, in, hold, out
+            state: 'idle',
             timer: 0
         };
 
@@ -21,20 +28,20 @@ export default class HUD {
 
         this.memoryCount = 0;
         this.totalMemories = 5;
-        this.unlockedAbilities = []; // array of ability names
+        this.unlockedAbilities = [];
     }
 
     update(dt, thirstPercent, chapterInfo, nearInteractable, memoryCount) {
-        this.targetThirstPercent = thirstPercent;
+        this.targetThirstPercent = thirstPercent || 100;
         const diff = this.targetThirstPercent - this.thirstPercent;
-        this.thirstPercent += diff * 10 * dt;
+        this.thirstPercent += diff * Math.min(1, dt * 10);
 
         if (this.chapterTitle.state === 'in') {
-            this.chapterTitle.alpha += dt * 0.5;
+            this.chapterTitle.alpha += dt * 0.8;
             if (this.chapterTitle.alpha >= 1) {
                 this.chapterTitle.alpha = 1;
                 this.chapterTitle.state = 'hold';
-                this.chapterTitle.timer = 3;
+                this.chapterTitle.timer = 3.5;
             }
         } else if (this.chapterTitle.state === 'hold') {
             this.chapterTitle.timer -= dt;
@@ -42,7 +49,7 @@ export default class HUD {
                 this.chapterTitle.state = 'out';
             }
         } else if (this.chapterTitle.state === 'out') {
-            this.chapterTitle.alpha -= dt * 0.5;
+            this.chapterTitle.alpha -= dt * 0.8;
             if (this.chapterTitle.alpha <= 0) {
                 this.chapterTitle.alpha = 0;
                 this.chapterTitle.state = 'idle';
@@ -56,7 +63,7 @@ export default class HUD {
             this.prompt.visible = false;
         }
 
-        this.memoryCount = memoryCount;
+        this.memoryCount = memoryCount || 0;
     }
 
     showChapterTitle(name, subtitle) {
@@ -76,120 +83,126 @@ export default class HUD {
     }
 
     render(ctx, canvasWidth, canvasHeight) {
+        ctx.save();
         this.renderThirstBar(ctx);
         this.renderMemoryCount(ctx, canvasWidth);
+        this.renderControlsHint(ctx, canvasHeight);
         this.renderChapterTitle(ctx, canvasWidth, canvasHeight);
         if (this.prompt.visible) {
             this.renderPrompt(ctx, canvasWidth, canvasHeight);
         }
-        this.renderAbilities(ctx, canvasWidth, canvasHeight);
+        ctx.restore();
     }
 
     renderThirstBar(ctx) {
-        const x = 20;
-        const y = 20;
-        const width = 200;
-        const height = 15;
+        const x = 24;
+        const y = 24;
+        const width = 180;
+        const height = 12;
 
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(x, y, width, height);
-
-        let barColor = COLORS?.thirstHigh || '#4db8ff';
-        if (this.thirstPercent < 50) barColor = COLORS?.thirstMedium || '#ffd700';
-        if (this.thirstPercent < 20) barColor = COLORS?.thirstLow || '#ff4d4d';
-
-        if (this.thirstPercent < 20) {
-            const pulse = (Math.sin(Date.now() / 200) + 1) / 2 * 0.2 + 0.8;
-            ctx.globalAlpha = pulse;
-        }
-
-        ctx.fillStyle = barColor;
-        ctx.fillRect(x, y, (width * this.thirstPercent) / 100, height);
-        ctx.globalAlpha = 1;
-
-        ctx.strokeStyle = '#ffffff';
+        // Dark background pill
+        ctx.fillStyle = 'rgba(8, 12, 20, 0.75)';
+        ctx.strokeStyle = 'rgba(70, 100, 140, 0.4)';
         ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, width, height);
-
         ctx.beginPath();
-        ctx.arc(x - 10, y + height / 2, 8, 0, Math.PI * 2);
-        ctx.fillStyle = barColor;
+        ctx.roundRect(x + 20, y, width, height, 6);
         ctx.fill();
-        ctx.closePath();
+        ctx.stroke();
+
+        // Droplet icon on left
+        const pct = Math.max(0, Math.min(100, this.thirstPercent));
+        let barColor = '#4db8ff';
+        if (pct < 45) barColor = '#ffd700';
+        if (pct < 20) barColor = '#ff4d4d';
+
+        ctx.fillStyle = barColor;
+        ctx.shadowColor = barColor;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(x + 8, y + height / 2, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Thirst progress bar fill
+        const fillW = Math.max(4, (width * pct) / 100);
+        ctx.fillStyle = barColor;
+        ctx.beginPath();
+        ctx.roundRect(x + 20, y, fillW, height, 6);
+        ctx.fill();
     }
 
     renderMemoryCount(ctx, canvasWidth) {
-        const x = canvasWidth - 80;
-        const y = 30;
+        const x = canvasWidth - 110;
+        const y = 24;
 
-        const gradient = ctx.createRadialGradient(x, y, 2, x, y, 10);
-        gradient.addColorStop(0, '#ffffff');
-        gradient.addColorStop(1, 'rgba(0, 150, 255, 0)');
-        
-        ctx.fillStyle = gradient;
+        // Background pill
+        ctx.fillStyle = 'rgba(8, 12, 20, 0.75)';
+        ctx.strokeStyle = 'rgba(70, 100, 140, 0.4)';
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(x, y, 10, 0, Math.PI * 2);
+        ctx.roundRect(x, y, 90, 24, 12);
         ctx.fill();
+        ctx.stroke();
 
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '16px monospace';
+        // Glowing Soul Fragment Orb
+        ctx.fillStyle = '#a0d8ff';
+        ctx.shadowColor = '#60b0ff';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(x + 16, y + 12, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Text Counter
+        ctx.fillStyle = '#e8f0ff';
+        ctx.font = '13px monospace';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${this.memoryCount}/${this.totalMemories}`, x + 15, y);
+        ctx.fillText(`${this.memoryCount}/${this.totalMemories}`, x + 30, y + 12);
+    }
+
+    renderControlsHint(ctx, canvasHeight) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(160, 180, 210, 0.5)';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('A / D: Run   •   Space: Jump   •   F: Lantern   •   Shift: Sprint', 24, canvasHeight - 18);
+        ctx.restore();
     }
 
     renderChapterTitle(ctx, canvasWidth, canvasHeight) {
-        if (this.chapterTitle.state === 'idle') return;
+        if (this.chapterTitle.state === 'idle' || this.chapterTitle.alpha <= 0) return;
 
         ctx.save();
-        ctx.globalAlpha = this.chapterTitle.alpha;
+        ctx.globalAlpha = Math.max(0, Math.min(1, this.chapterTitle.alpha));
         
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
-        
-        ctx.font = '48px Georgia, serif';
+        ctx.font = '36px Georgia, serif';
         ctx.shadowColor = '#000000';
-        ctx.shadowBlur = 10;
-        ctx.fillText(this.chapterTitle.name, canvasWidth / 2, canvasHeight / 3);
+        ctx.shadowBlur = 12;
+        ctx.fillText(this.chapterTitle.name, canvasWidth / 2, canvasHeight * 0.28);
         
-        ctx.font = '24px Georgia, serif';
-        ctx.fillStyle = '#cccccc';
-        ctx.fillText(this.chapterTitle.subtitle, canvasWidth / 2, canvasHeight / 3 + 40);
+        ctx.font = '18px Georgia, serif';
+        ctx.fillStyle = 'rgba(200, 215, 240, 0.85)';
+        ctx.fillText(this.chapterTitle.subtitle, canvasWidth / 2, canvasHeight * 0.28 + 34);
 
         ctx.restore();
     }
 
     renderPrompt(ctx, canvasWidth, canvasHeight) {
-        const bounce = Math.sin(this.prompt.bounceTimer) * 5;
+        const bounce = Math.sin(this.prompt.bounceTimer) * 4;
         const x = canvasWidth / 2;
-        const y = canvasHeight - 60 + bounce;
+        const y = canvasHeight - 70 + bounce;
 
+        ctx.save();
         ctx.fillStyle = '#ffffff';
-        ctx.font = '18px monospace';
+        ctx.font = '16px monospace';
         ctx.textAlign = 'center';
         ctx.shadowColor = '#000000';
-        ctx.shadowBlur = 5;
-        ctx.fillText(this.prompt.text, x, y);
-        ctx.shadowBlur = 0;
-    }
-
-    renderAbilities(ctx, canvasWidth, canvasHeight) {
-        const startX = canvasWidth - 40;
-        const startY = canvasHeight - 40;
-        const spacing = 35;
-
-        this.unlockedAbilities.forEach((ability, i) => {
-            const x = startX - (i * spacing);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.beginPath();
-            ctx.arc(x, startY, 12, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.fillStyle = '#000000';
-            ctx.font = '12px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(ability.substring(0, 1).toUpperCase(), x, startY);
-        });
+        ctx.shadowBlur = 8;
+        ctx.fillText(this.prompt.text || 'Press [E] to Interact', x, y);
+        ctx.restore();
     }
 }
