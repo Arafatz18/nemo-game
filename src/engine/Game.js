@@ -862,17 +862,9 @@ export default class Game {
 
         this.state = STATE.PLAYING;
 
-        // Show intro dialogue if any
-        const introMsg = chapterIntro?.intro || chapterIntro?.introText;
-        if (introMsg) {
-            this.state = STATE.DIALOGUE;
-            this.dialogueSystem.showDialogue([
-                { speaker: null, text: introMsg, duration: 0 }
-            ]);
-        }
-
         // Transition in
-        await this.transitionSystem.fadeIn(1200, '#000');
+        await this.transitionSystem.fadeIn(800, '#000');
+        this.state = STATE.PLAYING;
     }
 
     _pauseGame() {

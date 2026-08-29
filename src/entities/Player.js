@@ -175,7 +175,10 @@ export default class Player {
             if (p.destroyed) continue;
             if (p.type === 'one_way') continue; // Pass horizontally through one-way platforms
 
-            if (this._aabbOverlap(this, p)) {
+            // Only collide with walls that overlap player torso/body (not the floor below feet)
+            const isWallOverlap = (this.y + this.height - 8 > p.y) && (this.y + 8 < p.y + p.height);
+
+            if (isWallOverlap && this._aabbOverlap(this, p)) {
                 if (this.vx > 0) {
                     this.x = p.x - this.width;
                     this.onWall = true;
@@ -196,7 +199,7 @@ export default class Player {
 
             if (p.type === 'one_way') {
                 // Only land on one-way platforms from above
-                if (this.vy >= 0 && (this.y + this.height - this.vy) <= p.y + 8 && this._aabbOverlap(this, p)) {
+                if (this.vy >= 0 && (this.y + this.height - this.vy) <= p.y + 12 && this._aabbOverlap(this, p)) {
                     this.y = p.y - this.height;
                     this.vy = 0;
                     this.onGround = true;
