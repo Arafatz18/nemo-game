@@ -257,8 +257,8 @@ export default class Player {
                 ctx.drawImage(
                     spriteSheet,
                     frame.x, frame.y, fw, fh,
-                    -this.width / 2 - 12, -this.height / 2 - 20,
-                    this.width + 24, this.height + 24
+                    -this.width / 2, -this.height / 2,
+                    this.width, this.height
                 );
                 drewSprite = true;
             }
