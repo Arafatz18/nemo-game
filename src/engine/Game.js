@@ -584,28 +584,9 @@ export default class Game {
         this.fogSystem.render(bgCtx, this.camera, w, h);
 
         // --- Lighting Layer ---
-        lightCtx.save();
-        // Transform lights to camera space
-        const ambientLevel = chapterData?.ambientLight || 0.88;
+        const ambientLevel = chapterData?.ambientLight || 0.52;
         this.lightingSystem.setAmbient(ambientLevel);
-
-        // We need to offset all lights by camera position
-        // The lighting system renders in screen space, so lights need to be in screen space
-        // Temporarily shift light positions
-        const origLights = this.lightingSystem.lights.map(l => ({ ...l }));
-        for (const light of this.lightingSystem.lights) {
-            light.x -= this.camera.x - this.camera.shakeX;
-            light.y -= this.camera.y - this.camera.shakeY;
-        }
-        this.lightingSystem.render(lightCtx, w, h);
-        // Restore original positions
-        for (let i = 0; i < this.lightingSystem.lights.length; i++) {
-            if (origLights[i]) {
-                this.lightingSystem.lights[i].x = origLights[i].x;
-                this.lightingSystem.lights[i].y = origLights[i].y;
-            }
-        }
-        lightCtx.restore();
+        this.lightingSystem.render(lightCtx, w, h, this.camera.x - this.camera.shakeX, this.camera.y - this.camera.shakeY);
 
         // --- Weather overlay (screen space) ---
         this.weatherSystem.render(gameCtx, w, h);
