@@ -289,6 +289,10 @@ export default class Game {
 
         // --- Player ---
         this.player.update(this.input, this.physics, this.levelManager.platforms, dt);
+        if (this.player.health <= 0 || !this.player.active) {
+            this._playerDeath();
+            return;
+        }
 
         // --- Thirst ---
         this.thirstSystem.update(dt, this.player);

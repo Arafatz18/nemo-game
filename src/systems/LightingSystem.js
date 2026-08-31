@@ -11,7 +11,7 @@ export default class LightingSystem {
         this.canvasHeight = canvasHeight;
         this.lights = [];
         this.nextId = 1;
-        this.ambientDarkness = 0.55;
+        this.ambientDarkness = 0.38;
     }
 
     addLight(x, y, radius, color, intensity, flicker) {

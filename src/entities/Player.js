@@ -133,9 +133,9 @@ export default class Player {
         // --- Physics & Collision Movement ---
         this._handlePhysics(platforms);
 
-        // Fall into void check
-        if (this.y > 1500) {
-            this.die();
+        // Fall into void check -> auto respawn at checkpoint
+        if (this.y > 880) {
+            this.respawn(this.respawnX, this.respawnY);
         }
 
         // --- Animation State ---
